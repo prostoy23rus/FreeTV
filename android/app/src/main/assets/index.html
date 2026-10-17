@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#070d18">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>FreeTV Player</title>
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Боковая панель категорий и каналов -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-row">
+          <div class="brand">
+            <div class="brand-logo-wrap">
+              <svg class="brand-svg-logo" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="logoBg" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#38bdf8"/>
+                    <stop offset="100%" stop-color="#2563eb"/>
+                  </linearGradient>
+                  <linearGradient id="logoAccent" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#ffffff"/>
+                    <stop offset="100%" stop-color="#bae6fd"/>
+                  </linearGradient>
+                </defs>
+                <rect x="2" y="5" width="28" height="21" rx="6" fill="url(#logoBg)"/>
+                <rect x="4" y="7" width="24" height="17" rx="4" fill="#090e1c"/>
+                <path d="M13 11.5L21 15.5L13 19.5V11.5Z" fill="url(#logoAccent)"/>
+                <path d="M10 3L13.5 5.5M22 3L18.5 5.5" stroke="url(#logoBg)" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="24" cy="9" r="1.5" fill="#38bdf8"/>
+              </svg>
+            </div>
+            <div class="brand-title">Free<span class="brand-title-accent">TV</span></div>
+            <span class="brand-badge">PRO</span>
+          </div>
+          <button id="collapseSidebarBtn" class="icon-toggle-btn" title="Свернуть список (Ctrl+B)">◀</button>
+        </div>
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Поиск каналов...">
+          <button id="clearSearchBtn" class="clear-btn" title="Очистить">&times;</button>
+        </div>
+      </div>
+
+      <!-- Вкладки: Все, Избранное, История -->
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-tab="all">Все</button>
+        <button class="filter-tab" data-tab="fav">⭐ Избранное (<span id="favCount">0</span>)</button>
+        <button class="filter-tab" data-tab="history">🕒 История</button>
+      </div>
+
+      <!-- Выпадающий селектор категорий -->
+      <div class="category-select-wrapper">
+        <select id="categorySelect" class="category-dropdown">
+          <option value="ALL">Все категории</option>
+        </select>
+      </div>
+
+      <!-- Список каналов с динамической догрузкой (Infinite Scroll) -->
+      <div class="channel-list-container" id="channelListContainer">
+        <div class="list-status" id="listStatus">Загрузка плейлиста...</div>
+        <div class="channel-list" id="channelList"></div>
+      </div>
+
+      <div class="sidebar-footer">
+        <button id="refreshBtn" class="action-btn" title="Обновить плейлист">🔄 Обновить</button>
+        <button id="settingsBtn" class="action-btn" title="Настройки источника">⚙️ Источник</button>
+        <span id="channelCountBadge" class="channel-count">0 кан.</span>
+      </div>
+    </aside>
+
+    <!-- Основная область плеера -->
+    <main class="player-area">
+      <!-- Верхняя инфо-панель текущего канала -->
+      <header class="player-header">
+        <div class="header-left">
+          <!-- Кнопка разворачивания боковой панели, если она скрыта -->
+          <button id="expandSidebarBtn" class="expand-sidebar-btn" title="Показать список каналов (Ctrl+B)" style="display: none;">▶ Список</button>
+          <div class="current-channel-info">
+            <img id="currentLogo" class="current-logo" src="" alt="" style="display: none;">
+            <div class="current-text">
+              <h2 id="currentName">Выберите телеканал</h2>
+              <div class="current-meta">
+                <span id="currentCategory" class="badge">Категория</span>
+                <span id="streamStatus" class="status-indicator">Ожидание</span>
+                <span id="channelNumBadge" class="channel-number-badge">№ 0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="header-controls">
+          <button id="toggleFavBtn" class="fav-action-btn" title="Добавить в избранное" disabled>⭐</button>
+          <button id="pipBtn" class="action-control-btn" title="Картинка в картинке">🗔 PiP</button>
+          <button id="fullscreenBtn" class="action-control-btn" title="Полноэкранный режим (F)">⛶ Полный экран</button>
+        </div>
+      </header>
+
+      <!-- Контейнер видео -->
+      <div class="video-container" id="videoContainer">
+        <video id="videoPlayer" playsinline></video>
+        <div class="video-overlay-loader" id="videoLoader" style="display: none;">
+          <div class="spinner"></div>
+          <span id="loaderText">Подключение к потоку...</span>
+        </div>
+        <div class="error-banner" id="errorBanner" style="display: none;">
+          <div class="error-icon">⚠️</div>
+          <div id="errorText">Поток временно недоступен</div>
+          <button id="retryBtn" class="retry-btn">Повторить попытку</button>
+        </div>
+        <div class="quick-osd" id="quickOsd" style="display: none;"></div>
+      </div>
+
+      <!-- EPG (Телепрограмма) и детали передачи -->
+      <footer class="epg-bar">
+        <div class="epg-now">
+          <span class="epg-label" id="epgBadge">ЭФИР:</span>
+          <div class="epg-details">
+            <div class="epg-main-line">
+              <span id="epgTitle" class="epg-title">Загрузка телепрограммы...</span>
+              <span id="epgTimeRange" class="epg-time-range"></span>
+            </div>
+            <div class="epg-progress-container" id="epgProgressWrapper" style="display: none;">
+              <div class="epg-progress-bar" id="epgProgressBar" style="width: 0%;"></div>
+            </div>
+            <div class="epg-sub-line">
+              <span id="epgDesc" class="epg-desc"></span>
+              <span id="epgNext" class="epg-next"></span>
+            </div>
+          </div>
+        </div>
+        <div class="shortcuts-hint">
+          <span>↑ / ↓: каналы</span>
+          <span>Пробел: пауза</span>
+          <span>F: полный экран</span>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Модальное окно настроек источника плейлиста -->
+  <div class="modal" id="settingsModal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Источник плейлиста</h3>
+        <button class="close-modal-btn" id="closeSettingsBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <label for="playlistUrlInput">URL плейлиста (M3U / M3U8):</label>
+        <input type="text" id="playlistUrlInput" class="text-input" value="freetv_playlist.m3u">
+      </div>
+      <div class="modal-footer">
+        <button id="resetPlaylistBtn" class="btn secondary-btn">По умолчанию</button>
+        <button id="savePlaylistBtn" class="btn primary-btn">Сохранить и загрузить</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="dist/hls.min.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>

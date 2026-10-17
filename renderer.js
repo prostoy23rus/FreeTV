@@ -314,23 +314,51 @@ class FreeTVApp {
       this.loadPlaylist();
     });
 
-    // Клавиатурная навигация
+    // Навигация с пульта Android TV и клавиатуры
+    this.dialBuffer = '';
+    this.dialTimer = null;
+
     window.addEventListener('keydown', (e) => {
       if (document.activeElement === this.searchInput || document.activeElement === this.playlistUrlInput) {
         return;
       }
-      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+
+      // Переключение каналов стрелками и кнопками пульта ДУ (CH+, CH-, PageUp, PageDown)
+      if (e.key === 'ArrowDown' || e.key === 'ChannelDown' || e.key === 'PageDown') {
         e.preventDefault();
-        this.navigateChannels(e.key === 'ArrowDown' ? 1 : -1);
+        this.navigateChannels(1);
+      } else if (e.key === 'ArrowUp' || e.key === 'ChannelUp' || e.key === 'PageUp') {
+        e.preventDefault();
+        this.navigateChannels(-1);
+      } else if (e.key === 'Enter') {
+        if (document.activeElement && document.activeElement.classList.contains('channel-item')) {
+          e.preventDefault();
+          document.activeElement.click();
+        }
       } else if (e.key === 'f' || e.key === 'F') {
         this.fullscreenBtn.click();
-      } else if (e.key === ' ' || e.key === 'Spacebar') {
+      } else if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'MediaPlayPause') {
         e.preventDefault();
         if (this.video.paused) this.video.play();
         else this.video.pause();
+      } else if (e.key === 'MediaPlay') {
+        this.video.play();
+      } else if (e.key === 'MediaPause' || e.key === 'MediaStop') {
+        this.video.pause();
+      } else if (e.key === 'Escape' || e.key === 'Back' || e.key === 'GoBack' || e.keyCode === 4 || e.keyCode === 27) {
+        if (this.settingsModal.style.display !== 'none') {
+          this.settingsModal.style.display = 'none';
+        } else if (!this.sidebar.classList.contains('collapsed')) {
+          this.toggleSidebar(false);
+        } else if (document.fullscreenElement) {
+          document.exitFullscreen();
+        }
       } else if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) {
         e.preventDefault();
         this.toggleSidebar(this.sidebar.classList.contains('collapsed'));
+      } else if (/^[0-9]$/.test(e.key)) {
+        // Прямой набор номера канала с пульта ДУ
+        this.handleTvChannelDial(e.key);
       }
     });
 
@@ -531,6 +559,7 @@ class FreeTVApp {
       item.className = `channel-item ${isActive ? 'active' : ''}`;
       item.dataset.url = channel.url;
       item.dataset.channelId = channel.id;
+      item.setAttribute('tabindex', '0');
 
       const isFav = this.favorites.has(channel.url);
       const logo = this.getLogoForChannel(channel);
@@ -814,6 +843,35 @@ class FreeTVApp {
     if (nextIdx < 0) nextIdx = this.filteredChannels.length - 1;
     if (nextIdx >= this.filteredChannels.length) nextIdx = 0;
     this.playChannel(this.filteredChannels[nextIdx]);
+  }
+
+  handleTvChannelDial(digit) {
+    this.dialBuffer += digit;
+
+    let dialBadge = document.getElementById('tvChannelDial');
+    if (!dialBadge) {
+      dialBadge = document.createElement('div');
+      dialBadge.id = 'tvChannelDial';
+      dialBadge.className = 'tv-channel-dial';
+      document.body.appendChild(dialBadge);
+    }
+    dialBadge.textContent = `[ ${this.dialBuffer} ]`;
+    dialBadge.style.display = 'block';
+
+    if (this.dialTimer) clearTimeout(this.dialTimer);
+    this.dialTimer = setTimeout(() => {
+      const targetNum = parseInt(this.dialBuffer, 10);
+      dialBadge.style.display = 'none';
+      this.dialBuffer = '';
+
+      if (!isNaN(targetNum)) {
+        // Ищем канал по номеру или порядковому индексу
+        const found = this.channels.find(c => c.id === targetNum) || this.channels[targetNum - 1];
+        if (found) {
+          this.playChannel(found);
+        }
+      }
+    }, 1300);
   }
 
   // Избранное

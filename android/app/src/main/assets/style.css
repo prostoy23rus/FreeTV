@@ -1,0 +1,1034 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: #070d18;
+  color: #f1f5f9;
+  overflow: hidden;
+  user-select: none;
+}
+
+.app-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  position: relative;
+}
+
+/* ================== Боковая панель ================== */
+.sidebar {
+  width: 380px;
+  min-width: 320px;
+  max-width: 460px;
+  background-color: #0d1526;
+  border-right: 1px solid #1a2742;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
+}
+
+.sidebar.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  overflow: hidden !important;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.sidebar-header {
+  padding: 14px 16px 12px;
+  background-color: #0d1526;
+  border-bottom: 1px solid #1a2742;
+}
+
+.brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-logo-wrap {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 10px rgba(56, 189, 248, 0.4));
+  flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.brand-logo-wrap:hover {
+  transform: scale(1.08);
+}
+
+.brand-svg-logo {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.brand-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #f8fafc;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+}
+
+.brand-title-accent {
+  background: linear-gradient(135deg, #38bdf8 0%, #60a5fa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-left: 1px;
+}
+
+.brand-badge {
+  font-size: 10px;
+  background: linear-gradient(135deg, #0284c7, #2563eb);
+  color: white;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  box-shadow: 0 0 12px rgba(2, 132, 199, 0.45);
+}
+
+.icon-toggle-btn {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #94a3b8;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.icon-toggle-btn:hover {
+  background: #334155;
+  color: #fff;
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  font-size: 14px;
+  color: #64748b;
+  pointer-events: none;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 36px 10px 34px;
+  background: #172339;
+  border: 1px solid #283958;
+  border-radius: 8px;
+  color: #f8fafc;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.search-box input:focus {
+  border-color: #38bdf8;
+  background: #0f172a;
+}
+
+.clear-btn {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 18px;
+  cursor: pointer;
+  display: none;
+}
+
+.clear-btn:hover {
+  color: #f1f5f9;
+}
+
+/* Вкладки (Все, Избранное, История) */
+.filter-tabs {
+  display: flex;
+  padding: 8px 14px;
+  gap: 8px;
+  background: #0d1526;
+  border-bottom: 1px solid #1a2742;
+}
+
+.filter-tab {
+  flex: 1;
+  padding: 8px 6px;
+  background: #172339;
+  border: 1px solid #283958;
+  border-radius: 7px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.filter-tab:hover {
+  background: #233554;
+  color: #f8fafc;
+}
+
+.filter-tab.active {
+  background: #0284c7;
+  border-color: #38bdf8;
+  color: white;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+}
+
+/* Выбор категории через стильный дропдаун */
+.category-select-wrapper {
+  padding: 8px 14px;
+  background: #090e1c;
+  border-bottom: 1px solid #1a2742;
+}
+
+.category-dropdown {
+  width: 100%;
+  padding: 8px 12px;
+  background: #172339;
+  border: 1px solid #283958;
+  border-radius: 7px;
+  color: #e2e8f0;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+}
+
+.category-dropdown:focus {
+  border-color: #38bdf8;
+}
+
+/* Список каналов */
+.channel-list-container {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+  background: #090e1c;
+}
+
+.channel-list-container::-webkit-scrollbar {
+  width: 7px;
+}
+.channel-list-container::-webkit-scrollbar-thumb {
+  background: #243552;
+  border-radius: 4px;
+}
+.channel-list-container::-webkit-scrollbar-thumb:hover {
+  background: #38bdf8;
+}
+
+.list-status {
+  padding: 30px 20px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.channel-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.channel-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid #131d33;
+  cursor: pointer;
+  transition: all 0.15s;
+  gap: 12px;
+}
+
+.channel-item:hover {
+  background: #142038;
+}
+
+.channel-item.active {
+  background: linear-gradient(90deg, #0369a1 0%, #075985 100%);
+  border-left: 4px solid #38bdf8;
+}
+
+.channel-num {
+  font-size: 12px;
+  color: #64748b;
+  width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.channel-item.active .channel-num {
+  color: #bae6fd;
+}
+
+.channel-thumb-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  background: #172339;
+  border: 1px solid #283958;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.channel-thumb {
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  background: transparent;
+  object-fit: contain;
+  padding: 2px;
+}
+
+.channel-emoji {
+  font-size: 16px;
+  color: #64748b;
+  line-height: 1;
+}
+
+.channel-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.channel-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.2px;
+}
+
+.channel-group-tag {
+  font-size: 11px;
+  color: #7dd3fc;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.85;
+}
+
+.channel-fav-btn {
+  background: transparent;
+  border: none;
+  color: #475569;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 6px;
+  transition: all 0.15s;
+  line-height: 1;
+}
+
+.channel-fav-btn:hover {
+  color: #fbbf24;
+  transform: scale(1.2);
+}
+
+.channel-fav-btn.is-fav {
+  color: #fbbf24;
+}
+
+/* Футер боковой панели */
+.sidebar-footer {
+  padding: 10px 14px;
+  background: #0d1526;
+  border-top: 1px solid #1a2742;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.action-btn {
+  padding: 6px 12px;
+  background: #172339;
+  border: 1px solid #283958;
+  border-radius: 6px;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background: #233554;
+  color: #fff;
+}
+
+.channel-count {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* ================== Основная область плеера ================== */
+.player-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #000;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.player-header {
+  padding: 10px 20px;
+  background: #0d1526;
+  border-bottom: 1px solid #1a2742;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 60px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  flex: 1;
+}
+
+.expand-sidebar-btn {
+  background: #172339;
+  border: 1px solid #283958;
+  color: #38bdf8;
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.expand-sidebar-btn:hover {
+  background: #0284c7;
+  color: white;
+  border-color: #38bdf8;
+}
+
+.current-channel-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.current-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  background: #172339;
+  border-radius: 8px;
+  padding: 3px;
+  border: 1px solid #283958;
+}
+
+.current-channel-info h2 {
+  font-size: 17px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.current-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+}
+
+.badge {
+  font-size: 11px;
+  background: #172339;
+  color: #38bdf8;
+  border: 1px solid #283958;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-weight: 500;
+}
+
+.channel-number-badge {
+  font-size: 11px;
+  background: #1e293b;
+  color: #94a3b8;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.status-indicator {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.status-indicator.live {
+  color: #4ade80;
+  font-weight: 700;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.action-control-btn {
+  background: #172339;
+  border: 1px solid #283958;
+  color: #f1f5f9;
+  border-radius: 7px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-control-btn:hover {
+  background: #233554;
+  border-color: #38bdf8;
+}
+
+.fav-action-btn {
+  background: #172339;
+  border: 1px solid #283958;
+  color: #94a3b8;
+  border-radius: 7px;
+  padding: 6px 12px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fav-action-btn.is-fav {
+  color: #fbbf24;
+  border-color: #d97706;
+  background: rgba(217, 119, 6, 0.15);
+}
+
+/* ================== Видео Контейнер ================== */
+.video-container {
+  flex: 1;
+  position: relative;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+
+.video-overlay-loader {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  background: rgba(13, 21, 38, 0.88);
+  padding: 24px 36px;
+  border-radius: 14px;
+  backdrop-filter: blur(8px);
+  border: 1px solid #1a2742;
+}
+
+.spinner {
+  width: 42px;
+  height: 42px;
+  border: 4px solid #283958;
+  border-top: 4px solid #38bdf8;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-banner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.94);
+  border: 1px solid #ef4444;
+  padding: 24px 32px;
+  border-radius: 14px;
+  max-width: 420px;
+  text-align: center;
+  backdrop-filter: blur(8px);
+}
+
+.error-icon {
+  font-size: 34px;
+}
+
+.retry-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 7px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.retry-btn:hover {
+  opacity: 0.9;
+}
+
+.quick-osd {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: rgba(13, 21, 38, 0.85);
+  border: 1px solid #38bdf8;
+  color: #f8fafc;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+  animation: fadein 0.2s ease-out;
+}
+
+@keyframes fadein {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ================== EPG бар ================== */
+.epg-bar {
+  padding: 8px 20px;
+  background: #0d1526;
+  border-top: 1px solid #1a2742;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+}
+
+.epg-now {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+  max-width: 72%;
+}
+
+.epg-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 4px 8px;
+  border-radius: 5px;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.epg-details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.epg-main-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.epg-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.epg-time-range {
+  font-size: 12px;
+  color: #38bdf8;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.epg-progress-container {
+  width: 100%;
+  height: 3px;
+  background: #1e293b;
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 1px 0;
+}
+
+.epg-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8, #0284c7);
+  transition: width 0.3s;
+}
+
+.epg-sub-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.epg-desc {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.epg-next {
+  color: #64748b;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.shortcuts-hint {
+  display: flex;
+  gap: 14px;
+  font-size: 11px;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+/* ================== Модальное окно ================== */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: #0d1526;
+  border: 1px solid #283958;
+  border-radius: 12px;
+  width: 540px;
+  max-width: 90vw;
+  box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.6);
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #1a2742;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.close-modal-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.close-modal-btn:hover {
+  color: #fff;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-body label {
+  display: block;
+  font-size: 13px;
+  color: #cbd5e1;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.text-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: #172339;
+  border: 1px solid #283958;
+  border-radius: 8px;
+  color: #f8fafc;
+  font-size: 13px;
+  outline: none;
+}
+
+.text-input:focus {
+  border-color: #38bdf8;
+}
+
+.hint {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 10px;
+  line-height: 1.4;
+}
+
+.modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid #1a2742;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn {
+  padding: 8px 18px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.primary-btn {
+  background: #0284c7;
+  color: white;
+}
+
+.primary-btn:hover {
+  background: #0369a1;
+}
+
+.secondary-btn {
+  background: #172339;
+  color: #cbd5e1;
+  border: 1px solid #283958;
+}
+
+.secondary-btn:hover {
+  background: #233554;
+  color: #fff;
+}
+
+/* ========================================================
+   📺 ОПТИМИЗАЦИЯ ДЛЯ ANDROID TV (D-PAD / ПУЛЬТ ДУ)
+   ======================================================== */
+:focus-visible,
+.tv-focused {
+  outline: none !important;
+  box-shadow: 0 0 0 3px #38bdf8, 0 8px 24px rgba(56, 189, 248, 0.5) !important;
+  transform: scale(1.02);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  z-index: 10;
+}
+
+.channel-item:focus,
+.channel-item.tv-focused {
+  background: linear-gradient(90deg, #1e3a6a 0%, #0f274a 100%) !important;
+  border-left: 4px solid #38bdf8 !important;
+  color: #ffffff !important;
+}
+
+.filter-tab:focus,
+.filter-tab.tv-focused,
+.action-btn:focus,
+.action-btn.tv-focused,
+.action-control-btn:focus,
+.action-control-btn.tv-focused {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+}
+
+/* Крупный индикатор номера канала при наборе с пульта ДУ */
+.tv-channel-dial {
+  position: absolute;
+  top: 40px;
+  right: 50px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 2px solid #38bdf8;
+  color: #38bdf8;
+  font-size: 48px;
+  font-weight: 900;
+  padding: 10px 28px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(56, 189, 248, 0.4);
+  z-index: 500;
+  pointer-events: none;
+  font-family: monospace;
+  animation: fadein 0.2s ease-out;
+}
+
+/* ========================================================
+   📱 ОПТИМИЗАЦИЯ ДЛЯ СМАРТФОНОВ (MOBILE / TABLET)
+   ======================================================== */
+@media (max-width: 768px), (orientation: portrait) {
+  .app-container {
+    flex-direction: column;
+  }
+
+  /* Плеер закреплен сверху в портретном режиме */
+  .player-area {
+    order: 1;
+    height: auto;
+    flex: 0 0 auto;
+  }
+
+  .player-header {
+    padding: 8px 12px;
+  }
+
+  .current-name {
+    font-size: 15px;
+  }
+
+  .video-container {
+    width: 100vw;
+    height: 56.25vw; /* Пропорция 16:9 на ширину экрана телефона */
+    max-height: 40vh;
+  }
+
+  .epg-bar {
+    padding: 6px 12px;
+    min-height: 48px;
+  }
+
+  .shortcuts-hint {
+    display: none; /* Скрываем подсказки клавиатуры на телефоне */
+  }
+
+  .header-controls .action-control-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  /* Список каналов занимает нижнюю часть экрана */
+  .sidebar {
+    order: 2;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    flex: 1 1 auto;
+    border-right: none;
+    border-top: 1px solid #1a2742;
+    box-shadow: none;
+  }
+
+  .sidebar.collapsed {
+    display: none !important;
+  }
+
+  .channel-item {
+    padding: 12px 14px; /* Увеличенная область нажатия пальцем */
+    min-height: 54px;
+  }
+
+  .channel-name {
+    font-size: 14px;
+  }
+
+  .filter-tabs {
+    padding: 6px 12px;
+    gap: 6px;
+  }
+
+  .filter-tab {
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+}
+
+/* Ландшафтный режим на телефоне при открытии списка каналов */
+@media (max-width: 1024px) and (orientation: landscape) {
+  .sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 320px !important;
+    min-width: 300px !important;
+    background: rgba(13, 21, 38, 0.95);
+    backdrop-filter: blur(14px);
+    z-index: 200;
+  }
+
+  .video-container {
+    width: 100%;
+    height: 100%;
+  }
+
+  .shortcuts-hint {
+    display: none;
+  }
+}
+

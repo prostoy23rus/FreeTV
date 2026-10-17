@@ -880,3 +880,155 @@ video {
   background: #233554;
   color: #fff;
 }
+
+/* ========================================================
+   📺 ОПТИМИЗАЦИЯ ДЛЯ ANDROID TV (D-PAD / ПУЛЬТ ДУ)
+   ======================================================== */
+:focus-visible,
+.tv-focused {
+  outline: none !important;
+  box-shadow: 0 0 0 3px #38bdf8, 0 8px 24px rgba(56, 189, 248, 0.5) !important;
+  transform: scale(1.02);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  z-index: 10;
+}
+
+.channel-item:focus,
+.channel-item.tv-focused {
+  background: linear-gradient(90deg, #1e3a6a 0%, #0f274a 100%) !important;
+  border-left: 4px solid #38bdf8 !important;
+  color: #ffffff !important;
+}
+
+.filter-tab:focus,
+.filter-tab.tv-focused,
+.action-btn:focus,
+.action-btn.tv-focused,
+.action-control-btn:focus,
+.action-control-btn.tv-focused {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+}
+
+/* Крупный индикатор номера канала при наборе с пульта ДУ */
+.tv-channel-dial {
+  position: absolute;
+  top: 40px;
+  right: 50px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 2px solid #38bdf8;
+  color: #38bdf8;
+  font-size: 48px;
+  font-weight: 900;
+  padding: 10px 28px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(56, 189, 248, 0.4);
+  z-index: 500;
+  pointer-events: none;
+  font-family: monospace;
+  animation: fadein 0.2s ease-out;
+}
+
+/* ========================================================
+   📱 ОПТИМИЗАЦИЯ ДЛЯ СМАРТФОНОВ (MOBILE / TABLET)
+   ======================================================== */
+@media (max-width: 768px), (orientation: portrait) {
+  .app-container {
+    flex-direction: column;
+  }
+
+  /* Плеер закреплен сверху в портретном режиме */
+  .player-area {
+    order: 1;
+    height: auto;
+    flex: 0 0 auto;
+  }
+
+  .player-header {
+    padding: 8px 12px;
+  }
+
+  .current-name {
+    font-size: 15px;
+  }
+
+  .video-container {
+    width: 100vw;
+    height: 56.25vw; /* Пропорция 16:9 на ширину экрана телефона */
+    max-height: 40vh;
+  }
+
+  .epg-bar {
+    padding: 6px 12px;
+    min-height: 48px;
+  }
+
+  .shortcuts-hint {
+    display: none; /* Скрываем подсказки клавиатуры на телефоне */
+  }
+
+  .header-controls .action-control-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  /* Список каналов занимает нижнюю часть экрана */
+  .sidebar {
+    order: 2;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    flex: 1 1 auto;
+    border-right: none;
+    border-top: 1px solid #1a2742;
+    box-shadow: none;
+  }
+
+  .sidebar.collapsed {
+    display: none !important;
+  }
+
+  .channel-item {
+    padding: 12px 14px; /* Увеличенная область нажатия пальцем */
+    min-height: 54px;
+  }
+
+  .channel-name {
+    font-size: 14px;
+  }
+
+  .filter-tabs {
+    padding: 6px 12px;
+    gap: 6px;
+  }
+
+  .filter-tab {
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+}
+
+/* Ландшафтный режим на телефоне при открытии списка каналов */
+@media (max-width: 1024px) and (orientation: landscape) {
+  .sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 320px !important;
+    min-width: 300px !important;
+    background: rgba(13, 21, 38, 0.95);
+    backdrop-filter: blur(14px);
+    z-index: 200;
+  }
+
+  .video-container {
+    width: 100%;
+    height: 100%;
+  }
+
+  .shortcuts-hint {
+    display: none;
+  }
+}
+
