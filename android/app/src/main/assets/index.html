@@ -161,7 +161,8 @@
     </div>
   </div>
 
-  <script src="dist/hls.min.js"></script>
+  <script src="hls.min.js"></script>
+  <script>if (typeof Hls === 'undefined') { document.write('<script src="dist/hls.min.js"><\/script>'); }</script>
   <script src="renderer.js"></script>
 </body>
 </html>
