@@ -247,10 +247,38 @@ class FreeTVApp {
       }
     });
 
-    // Клик по видео ставит на паузу / пуск
-    this.video.addEventListener('click', () => {
-      if (this.video.paused) this.video.play();
-      else this.video.pause();
+    // Плавное скрытие и показ плавающих оверлеев при тапе/движении мыши
+    let controlsTimer = null;
+    this.playerHeader = document.querySelector('.player-header');
+    this.epgBar = document.querySelector('.epg-bar');
+
+    const showControls = () => {
+      if (this.playerHeader) this.playerHeader.classList.remove('controls-hidden');
+      if (this.epgBar) this.epgBar.classList.remove('controls-hidden');
+
+      if (controlsTimer) clearTimeout(controlsTimer);
+      controlsTimer = setTimeout(() => {
+        if (!this.video.paused) {
+          if (this.playerHeader) this.playerHeader.classList.add('controls-hidden');
+          if (this.epgBar) this.epgBar.classList.add('controls-hidden');
+        }
+      }, 4000);
+    };
+
+    // Тап по видео переключает видимость панелей управления
+    this.video.addEventListener('click', (e) => {
+      const isHidden = this.playerHeader && this.playerHeader.classList.contains('controls-hidden');
+      if (isHidden) {
+        showControls();
+      } else {
+        if (controlsTimer) clearTimeout(controlsTimer);
+        if (this.playerHeader) this.playerHeader.classList.add('controls-hidden');
+        if (this.epgBar) this.epgBar.classList.add('controls-hidden');
+      }
+    });
+
+    this.videoContainer.addEventListener('mousemove', () => {
+      showControls();
     });
 
     this.video.addEventListener('playing', () => {
@@ -360,6 +388,14 @@ class FreeTVApp {
       } else if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) {
         e.preventDefault();
         this.toggleSidebar(this.sidebar.classList.contains('collapsed'));
+      } else if (e.key === 'ArrowLeft' && this.sidebar.classList.contains('collapsed')) {
+        this.toggleSidebar(true);
+        setTimeout(() => {
+          const active = this.channelList.querySelector('.channel-item.active') || this.channelList.querySelector('.channel-item');
+          if (active) active.focus();
+        }, 150);
+      } else if (e.key === 'ArrowRight' && !this.sidebar.classList.contains('collapsed') && window.innerWidth > window.innerHeight) {
+        this.toggleSidebar(false);
       } else if (/^[0-9]$/.test(e.key)) {
         // Прямой набор номера канала с пульта ДУ
         this.handleTvChannelDial(e.key);
@@ -681,6 +717,11 @@ class FreeTVApp {
 
     // Запуск потока
     this.loadStream(channel.url);
+
+    // В ландшафтном режиме / на ТВ плавно скрываем боковую панель через 500мс для полноэкранного просмотра
+    if (window.innerWidth > window.innerHeight) {
+      setTimeout(() => this.toggleSidebar(false), 500);
+    }
   }
 
   async fetchAndDisplayEpg(channel) {
