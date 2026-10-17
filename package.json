@@ -1,0 +1,62 @@
+{
+  "name": "freetv",
+  "productName": "FreeTV",
+  "version": "1.0.0",
+  "description": "FreeTV Desktop - Современный высокоскоростной IPTV плеер",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis"
+  },
+  "build": {
+    "appId": "com.freetv.player",
+    "productName": "FreeTV",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer.js",
+      "index.html",
+      "style.css",
+      "freetv_playlist.m3u",
+      "icon.png",
+      "icon.ico",
+      "dist/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "FreeTV Player",
+      "installerIcon": "icon.ico",
+      "uninstallerIcon": "icon.ico",
+      "uninstallDisplayName": "FreeTV Player"
+    }
+  },
+  "keywords": [
+    "iptv",
+    "player",
+    "webrtc",
+    "hls",
+    "freetv"
+  ],
+  "author": "prostoy23rus",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "hls.js": "^1.7.3"
+  },
+  "devDependencies": {
+    "electron": "^44.9.0",
+    "electron-builder": "^26.7.1"
+  }
+}
