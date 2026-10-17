@@ -36,6 +36,10 @@ class FreeTVApp {
   }
 
   initDOMElements() {
+    if (window.AndroidBridge && typeof window.AndroidBridge.isAndroidTv === 'function' && window.AndroidBridge.isAndroidTv()) {
+      document.body.classList.add('is-tv');
+    }
+
     this.sidebar = document.getElementById('sidebar');
     this.collapseSidebarBtn = document.getElementById('collapseSidebarBtn');
     this.expandSidebarBtn = document.getElementById('expandSidebarBtn');
@@ -385,13 +389,21 @@ class FreeTVApp {
 
     try {
       let content = '';
-      if (window.api && window.api.fetchUrl) {
+      if (window.AndroidBridge && typeof window.AndroidBridge.getBundledPlaylist === 'function' && (!this.playlistUrl || this.playlistUrl.includes('freetv_playlist.m3u'))) {
+        content = window.AndroidBridge.getBundledPlaylist();
+      } else if (window.AndroidBridge && typeof window.AndroidBridge.fetchUrl === 'function') {
+        content = window.AndroidBridge.fetchUrl(this.playlistUrl);
+      } else if (window.api && window.api.fetchUrl) {
         const res = await window.api.fetchUrl(this.playlistUrl);
         if (!res.success) throw new Error(res.error);
         content = res.data;
       } else {
         const res = await fetch(this.playlistUrl);
         content = await res.text();
+      }
+
+      if (!content || !content.trim()) {
+        throw new Error('Не удалось получить содержимое плейлиста');
       }
 
       this.channels = this.parseM3U(content);
@@ -409,10 +421,15 @@ class FreeTVApp {
         const candidate = this.channels.find(c => c.url === lastChannelUrl) || this.channels[0];
         this.playChannel(candidate);
       }
+
+      setTimeout(() => {
+        const first = this.channelList.querySelector('.channel-item');
+        if (first) first.focus();
+      }, 350);
     } catch (err) {
-      console.error('Playlist load error:', err);
+      console.error('Ошибка загрузки плейлиста:', err);
       this.listStatus.style.display = 'block';
-      this.listStatus.textContent = `Ошибка загрузки плейлиста: ${err.message}`;
+      this.listStatus.textContent = 'Ошибка загрузки плейлиста: ' + err.message;
     }
   }
 
@@ -587,6 +604,31 @@ class FreeTVApp {
           return;
         }
         this.playChannel(channel);
+      });
+
+      // Навигация с пульта ДУ (D-Pad стрелки и выбор)
+      item.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          this.playChannel(channel);
+        } else if (e.key === 'ArrowDown') {
+          const next = item.nextElementSibling;
+          if (next && next.classList.contains('channel-item')) {
+            e.preventDefault();
+            next.focus();
+            next.scrollIntoView({ block: 'nearest' });
+          }
+        } else if (e.key === 'ArrowUp') {
+          const prev = item.previousElementSibling;
+          if (prev && prev.classList.contains('channel-item')) {
+            e.preventDefault();
+            prev.focus();
+            prev.scrollIntoView({ block: 'nearest' });
+          } else {
+            e.preventDefault();
+            this.categorySelect.focus();
+          }
+        }
       });
 
       fragment.appendChild(item);

@@ -2,10 +2,9 @@ package com.freetv.player;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.pm.ActivityInfo;
+import android.app.UiModeManager;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.net.http.SslError;
 import android.os.Build;
@@ -14,6 +13,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -23,7 +23,10 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class MainActivity extends Activity {
 
@@ -35,12 +38,65 @@ public class MainActivity extends Activity {
     private static final String DESKTOP_USER_AGENT = 
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
 
+    public class WebAppInterface {
+        @JavascriptInterface
+        public String getBundledPlaylist() {
+            try {
+                AssetManager am = getAssets();
+                InputStream is = am.open("freetv_playlist.m3u");
+                ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                byte[] temp = new byte[16384];
+                int read;
+                while ((read = is.read(temp)) != -1) {
+                    buffer.write(temp, 0, read);
+                }
+                buffer.flush();
+                is.close();
+                return buffer.toString("UTF-8");
+            } catch (Exception e) {
+                e.printStackTrace();
+                return "";
+            }
+        }
+
+        @JavascriptInterface
+        public String fetchUrl(String urlString) {
+            try {
+                URL url = new URL(urlString);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setRequestProperty("User-Agent", DESKTOP_USER_AGENT);
+                conn.setConnectTimeout(8000);
+                conn.setReadTimeout(12000);
+                conn.connect();
+
+                InputStream is = conn.getInputStream();
+                ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                byte[] temp = new byte[16384];
+                int read;
+                while ((read = is.read(temp)) != -1) {
+                    buffer.write(temp, 0, read);
+                }
+                buffer.flush();
+                is.close();
+                return buffer.toString("UTF-8");
+            } catch (Exception e) {
+                return "";
+            }
+        }
+
+        @JavascriptInterface
+        public boolean isAndroidTv() {
+            UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
+            return uiModeManager != null && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION;
+        }
+    }
+
     @Override
     @SuppressLint("SetJavaScriptEnabled")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Полноэкранный режим и запрет отключения экрана при воспроизведении
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         hideSystemUI();
@@ -62,7 +118,9 @@ public class MainActivity extends Activity {
         initWebViewSettings();
         setupWebViewClients();
 
-        // Загрузка локального приложения
+        // Добавляем нативный мост для мгновенного доступа к плейлисту и сети
+        webView.addJavascriptInterface(new WebAppInterface(), "AndroidBridge");
+
         webView.loadUrl("file:///android_asset/index.html");
     }
 
@@ -104,7 +162,6 @@ public class MainActivity extends Activity {
         settings.setSupportZoom(false);
         settings.setBuiltInZoomControls(false);
 
-        // Эмуляция User-Agent для стабильного открытия защищенных потоков без 400 ошибок
         settings.setUserAgentString(DESKTOP_USER_AGENT);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -113,6 +170,8 @@ public class MainActivity extends Activity {
 
         webView.setBackgroundColor(0xFF070D18);
         webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
+        webView.setFocusable(true);
+        webView.setFocusableInTouchMode(true);
     }
 
     private void setupWebViewClients() {
@@ -122,7 +181,6 @@ public class MainActivity extends Activity {
                 Uri uri = request.getUrl();
                 String path = uri.getPath();
 
-                // Автоматическая подстановка встроенного плейлиста из assets
                 if (path != null && path.endsWith("freetv_playlist.m3u")) {
                     try {
                         AssetManager am = getAssets();
@@ -137,7 +195,6 @@ public class MainActivity extends Activity {
 
             @Override
             public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-                // Разрешаем стримы с самоподписанными или устаревшими SSL сертификатами
                 handler.proceed();
             }
         });
@@ -173,67 +230,72 @@ public class MainActivity extends Activity {
         });
     }
 
-    /**
-     * Обработка клавиш пульта дистанционного управления Android TV
-     */
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (event.getAction() == KeyEvent.ACTION_DOWN) {
             int keyCode = event.getKeyCode();
-            switch (keyCode) {
-                case KeyEvent.KEYCODE_DPAD_UP:
-                case KeyEvent.KEYCODE_CHANNEL_UP:
-                case KeyEvent.KEYCODE_PAGE_UP:
-                    dispatchJsEvent("ChannelUp");
-                    return true;
 
-                case KeyEvent.KEYCODE_DPAD_DOWN:
-                case KeyEvent.KEYCODE_CHANNEL_DOWN:
-                case KeyEvent.KEYCODE_PAGE_DOWN:
-                    dispatchJsEvent("ChannelDown");
-                    return true;
-
-                case KeyEvent.KEYCODE_DPAD_CENTER:
-                case KeyEvent.KEYCODE_ENTER:
-                    dispatchJsEvent("Enter");
-                    return true;
-
-                case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
-                    dispatchJsEvent("MediaPlayPause");
-                    return true;
-
-                case KeyEvent.KEYCODE_MEDIA_PLAY:
-                    dispatchJsEvent("MediaPlay");
-                    return true;
-
-                case KeyEvent.KEYCODE_MEDIA_PAUSE:
-                case KeyEvent.KEYCODE_MEDIA_STOP:
-                    dispatchJsEvent("MediaPause");
-                    return true;
-
-                case KeyEvent.KEYCODE_0:
-                case KeyEvent.KEYCODE_1:
-                case KeyEvent.KEYCODE_2:
-                case KeyEvent.KEYCODE_3:
-                case KeyEvent.KEYCODE_4:
-                case KeyEvent.KEYCODE_5:
-                case KeyEvent.KEYCODE_6:
-                case KeyEvent.KEYCODE_7:
-                case KeyEvent.KEYCODE_8:
-                case KeyEvent.KEYCODE_9:
-                    char digit = (char) ('0' + (keyCode - KeyEvent.KEYCODE_0));
-                    dispatchJsEvent(String.valueOf(digit));
-                    return true;
-
-                case KeyEvent.KEYCODE_BACK:
-                    if (customView != null) {
-                        ((WebChromeClient) webView.getWebChromeClient()).onHideCustomView();
-                        return true;
+            // Если отображается нативное полноэкранное видео
+            if (customView != null) {
+                if (keyCode == KeyEvent.KEYCODE_BACK) {
+                    if (webView != null && webView.getWebChromeClient() != null) {
+                        webView.getWebChromeClient().onHideCustomView();
                     }
-                    dispatchJsEvent("Escape");
                     return true;
+                }
+                if (keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode == KeyEvent.KEYCODE_CHANNEL_UP) {
+                    dispatchJsEvent("ArrowUp");
+                    return true;
+                }
+                if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN || keyCode == KeyEvent.KEYCODE_CHANNEL_DOWN) {
+                    dispatchJsEvent("ArrowDown");
+                    return true;
+                }
+                if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER) {
+                    dispatchJsEvent(" ");
+                    return true;
+                }
+            }
+
+            // Выделенные кнопки каналов на пультах Android TV
+            if (keyCode == KeyEvent.KEYCODE_CHANNEL_UP || keyCode == KeyEvent.KEYCODE_PAGE_UP) {
+                dispatchJsEvent("ChannelUp");
+                return true;
+            }
+            if (keyCode == KeyEvent.KEYCODE_CHANNEL_DOWN || keyCode == KeyEvent.KEYCODE_PAGE_DOWN) {
+                dispatchJsEvent("ChannelDown");
+                return true;
+            }
+
+            // Медиа-кнопки пульта
+            if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {
+                dispatchJsEvent("MediaPlayPause");
+                return true;
+            }
+            if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY) {
+                dispatchJsEvent("MediaPlay");
+                return true;
+            }
+            if (keyCode == KeyEvent.KEYCODE_MEDIA_PAUSE || keyCode == KeyEvent.KEYCODE_MEDIA_STOP) {
+                dispatchJsEvent("MediaPause");
+                return true;
+            }
+
+            // Цифры 0-9 (прямой ввод номера канала с пульта)
+            if (keyCode >= KeyEvent.KEYCODE_0 && keyCode <= KeyEvent.KEYCODE_9) {
+                char digit = (char) ('0' + (keyCode - KeyEvent.KEYCODE_0));
+                dispatchJsEvent(String.valueOf(digit));
+                return true;
+            }
+
+            // Кнопка Назад
+            if (keyCode == KeyEvent.KEYCODE_BACK) {
+                dispatchJsEvent("Escape");
+                return true;
             }
         }
+
+        // DPAD_UP, DPAD_DOWN, DPAD_LEFT, DPAD_RIGHT, DPAD_CENTER передаются в WebView для стандартного перемещения фокуса!
         return super.dispatchKeyEvent(event);
     }
 
