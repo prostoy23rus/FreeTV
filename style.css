@@ -663,30 +663,33 @@ body.is-tv .splash-progress-track {
 }
 
 .player-header {
-  padding: 10px 20px;
+  padding: 8px 18px;
   background: #0d1526;
   border-bottom: 1px solid #1a2742;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 60px;
+  gap: 12px;
+  min-height: 52px;
+  overflow: hidden;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   min-width: 0;
-  flex: 1;
+  flex: 1 1 auto;
+  overflow: hidden;
 }
 
 .expand-sidebar-btn {
   background: #172339;
   border: 1px solid #283958;
   color: #38bdf8;
-  padding: 7px 14px;
+  padding: 6px 12px;
   border-radius: 7px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
@@ -703,31 +706,45 @@ body.is-tv .splash-progress-track {
 .current-channel-info {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
 }
 
 .current-logo {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   object-fit: contain;
   background: #172339;
   border-radius: 8px;
   padding: 3px;
   border: 1px solid #283958;
+  flex-shrink: 0;
+}
+
+.current-text {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
 }
 
 .current-channel-info h2 {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .current-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 3px;
+  gap: 6px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .badge {
@@ -761,23 +778,27 @@ body.is-tv .splash-progress-track {
 .header-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .fullscreen-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
   background: #172339;
   border: 1px solid #283958;
   color: #f1f5f9;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 13px;
+  padding: 6px 11px;
+  border-radius: 7px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   touch-action: manipulation;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .fullscreen-btn:hover,
@@ -792,23 +813,25 @@ body.is-tv .splash-progress-track {
 }
 
 .fullscreen-btn .btn-icon {
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .aspect-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   background: #172339;
   border: 1px solid #283958;
   color: #f1f5f9;
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-size: 13px;
+  padding: 6px 11px;
+  border-radius: 7px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   touch-action: manipulation;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .aspect-btn:hover,
@@ -1485,10 +1508,12 @@ body.is-tv:not(.tv-fullscreen) .player-header {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  padding: 10px 24px !important;
+  padding: 8px 18px !important;
   background: #0d1526 !important;
   border-bottom: 1px solid #1a2742 !important;
-  min-height: 64px !important;
+  min-height: 54px !important;
+  gap: 12px !important;
+  overflow: hidden !important;
 }
 
 /* На ТВ скрываем раздел настроек и подсказки клавиатуры */
@@ -1605,14 +1630,27 @@ body.is-tv .channel-thumb-box {
   height: 46px !important;
 }
 
+body.is-tv .header-right {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+}
+
 body.is-tv .fullscreen-btn,
 body.is-tv .aspect-btn {
-  padding: 10px 20px !important;
-  font-size: 15px !important;
-  border-radius: 9px !important;
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  border-radius: 7px !important;
   background: #172339 !important;
   border: 1.5px solid #38bdf8 !important;
   color: #f8fafc !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  gap: 6px !important;
+  min-height: 36px !important;
+  height: 36px !important;
 }
 
 body.is-tv .fullscreen-btn:focus,
@@ -1623,8 +1661,8 @@ body.is-tv .aspect-btn:hover {
   border-color: #ffffff !important;
   color: #ffffff !important;
   outline: none !important;
-  transform: scale(1.06) !important;
-  box-shadow: 0 0 0 3px #ffffff, 0 0 20px rgba(56, 189, 248, 0.8) !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 0 0 3px #ffffff, 0 0 16px rgba(56, 189, 248, 0.8) !important;
 }
 
 /* ================== РЕЖИМ ВО ВЕСЬ ЭКРАН НА ТВ (ТОЛЬКО ПО КНОПКЕ) ================== */

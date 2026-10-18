@@ -1158,12 +1158,12 @@ class FreeTVApp {
     }
     if (this.aspectRatioBtnText) {
       const shortLabels = {
-        safe: 'Рамки ТВ',
+        safe: 'Рамки',
         contain: 'Вписать',
         cover: 'Без полос',
         fill: '16:9'
       };
-      this.aspectRatioBtnText.textContent = shortLabels[modeId] || 'Масштаб';
+      this.aspectRatioBtnText.textContent = shortLabels[modeId] || 'Формат';
     }
   }
 
@@ -1386,7 +1386,7 @@ class FreeTVApp {
     } else {
       document.body.classList.remove('tv-fullscreen');
       if (this.fullscreenBtn) {
-        this.fullscreenBtn.querySelector('.btn-text').textContent = 'Во весь экран';
+        this.fullscreenBtn.querySelector('.btn-text').textContent = 'Во весь';
         this.fullscreenBtn.querySelector('.btn-icon').textContent = '⛶';
         this.fullscreenBtn.focus();
       }
