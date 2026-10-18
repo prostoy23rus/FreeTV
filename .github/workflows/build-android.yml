@@ -1,4 +1,4 @@
-name: Build Android APK (Phones & Android TV)
+name: Build Applications (Windows, Phones & Android TV)
 
 on:
   push:
@@ -8,12 +8,15 @@ on:
       - 'renderer.js'
       - 'style.css'
       - 'index.html'
+      - 'main.js'
+      - 'preload.js'
       - 'freetv_playlist.m3u'
+      - 'package.json'
       - 'RELEASE_NOTES.md'
   workflow_dispatch:
 
 jobs:
-  build:
+  build-android:
     name: Build Android Mobile & TV APKs
     runs-on: ubuntu-latest
     permissions:
@@ -67,5 +70,48 @@ jobs:
             release-apk/FreeTV.Android.Mobile.1.0.0.apk
             release-apk/FreeTV.Android.TV.1.0.0.apk
             release-apk/FreeTV.Setup.Android.1.0.0.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-windows:
+    name: Build Windows Desktop Setup
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Windows Installer
+        run: npm run dist
+
+      - name: Prepare Windows Artifact
+        shell: bash
+        run: |
+          cp "release/FreeTV Setup 1.0.0.exe" "release/FreeTV.Setup.1.0.0.exe"
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FreeTV-Windows-v1.0.0
+          path: release/FreeTV.Setup.1.0.0.exe
+
+      - name: Attach Windows Installer to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: FreeTV Player v1.0.0 (Windows, Mobile & Android TV)
+          body_path: RELEASE_NOTES.md
+          files: |
+            release/FreeTV.Setup.1.0.0.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
