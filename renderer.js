@@ -67,6 +67,11 @@ class FreeTVApp {
     this.channelList = document.getElementById('channelList');
     this.listStatus = document.getElementById('listStatus');
     this.categorySelect = document.getElementById('categorySelect');
+    this.categorySelectBtn = document.getElementById('categorySelectBtn');
+    this.selectedCategoryLabel = document.getElementById('selectedCategoryLabel');
+    this.categoryModal = document.getElementById('categoryModal');
+    this.categoryModalList = document.getElementById('categoryModalList');
+    this.closeCategoryModalBtn = document.getElementById('closeCategoryModalBtn');
     this.searchInput = document.getElementById('searchInput');
     this.clearSearchBtn = document.getElementById('clearSearchBtn');
     this.channelCountBadge = document.getElementById('channelCountBadge');
@@ -237,11 +242,35 @@ class FreeTVApp {
       });
     });
 
-    // Выбор категории
-    this.categorySelect.addEventListener('change', (e) => {
-      this.selectedCategory = e.target.value;
-      this.applyFilters();
-    });
+    // Выбор категории через модальное окно (для ТВ-пульта и клика)
+    if (this.categorySelectBtn) {
+      this.categorySelectBtn.addEventListener('click', () => {
+        this.openCategoryModal();
+      });
+    }
+
+    if (this.closeCategoryModalBtn) {
+      this.closeCategoryModalBtn.addEventListener('click', () => {
+        this.closeCategoryModal();
+      });
+    }
+
+    if (this.categoryModal) {
+      this.categoryModal.addEventListener('click', (e) => {
+        if (e.target === this.categoryModal) {
+          this.closeCategoryModal();
+        }
+      });
+    }
+
+    // Выбор категории через стандартный select
+    if (this.categorySelect) {
+      this.categorySelect.addEventListener('change', (e) => {
+        this.selectedCategory = e.target.value;
+        this.updateCategoryLabel();
+        this.applyFilters();
+      });
+    }
 
     // Избранное у текущего канала (если кнопка есть)
     if (this.toggleFavBtn) {
@@ -616,13 +645,94 @@ class FreeTVApp {
   }
 
   populateCategoryDropdown() {
-    this.categorySelect.innerHTML = `<option value="ALL">Все категории (${this.channels.length})</option>`;
+    if (this.categorySelect) {
+      this.categorySelect.innerHTML = `<option value="ALL">Все категории (${this.channels.length})</option>`;
+      this.categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat.name;
+        opt.textContent = `${cat.name} (${cat.count})`;
+        if (this.selectedCategory === cat.name) opt.selected = true;
+        this.categorySelect.appendChild(opt);
+      });
+    }
+    this.updateCategoryLabel();
+  }
+
+  updateCategoryLabel() {
+    if (!this.selectedCategoryLabel) return;
+    if (this.selectedCategory === 'ALL') {
+      this.selectedCategoryLabel.textContent = `Все категории (${this.channels.length})`;
+    } else {
+      const found = this.categories.find(c => c.name === this.selectedCategory);
+      const count = found ? found.count : 0;
+      this.selectedCategoryLabel.textContent = `${this.selectedCategory} (${count})`;
+    }
+    if (this.categorySelect) {
+      this.categorySelect.value = this.selectedCategory;
+    }
+  }
+
+  openCategoryModal() {
+    if (!this.categoryModal || !this.categoryModalList) return;
+    this.renderCategoryModalList();
+    this.categoryModal.style.display = 'flex';
+    setTimeout(() => {
+      const active = this.categoryModalList.querySelector('.category-modal-item.active') ||
+                     this.categoryModalList.querySelector('.category-modal-item');
+      if (active) {
+        active.focus();
+        active.scrollIntoView({ block: 'nearest' });
+      }
+    }, 60);
+  }
+
+  closeCategoryModal() {
+    if (this.categoryModal) {
+      this.categoryModal.style.display = 'none';
+    }
+    if (this.categorySelectBtn) {
+      this.categorySelectBtn.focus();
+    }
+  }
+
+  renderCategoryModalList() {
+    if (!this.categoryModalList) return;
+    this.categoryModalList.innerHTML = '';
+
+    const allItem = document.createElement('button');
+    const isAllActive = this.selectedCategory === 'ALL';
+    allItem.className = `category-modal-item ${isAllActive ? 'active' : ''}`;
+    allItem.tabIndex = 0;
+    allItem.innerHTML = `
+      <span class="cat-modal-name">${isAllActive ? '✓ ' : ''}Все категории</span>
+      <span class="cat-modal-count">${this.channels.length}</span>
+    `;
+    allItem.addEventListener('click', () => {
+      this.selectedCategory = 'ALL';
+      this.updateCategoryLabel();
+      this.applyFilters();
+      this.closeCategoryModal();
+      this.focusCurrentOrFirstChannel();
+    });
+    this.categoryModalList.appendChild(allItem);
+
     this.categories.forEach(cat => {
-      const opt = document.createElement('option');
-      opt.value = cat.name;
-      opt.textContent = `${cat.name} (${cat.count})`;
-      if (this.selectedCategory === cat.name) opt.selected = true;
-      this.categorySelect.appendChild(opt);
+      const item = document.createElement('button');
+      const isActive = this.selectedCategory === cat.name;
+      item.className = `category-modal-item ${isActive ? 'active' : ''}`;
+      item.tabIndex = 0;
+      item.innerHTML = `
+        <span class="cat-modal-name">${isActive ? '✓ ' : ''}${cat.name}</span>
+        <span class="cat-modal-count">${cat.count}</span>
+      `;
+      item.addEventListener('click', () => {
+        this.selectedCategory = cat.name;
+        this.updateCategoryLabel();
+        this.applyFilters();
+        this.closeCategoryModal();
+        this.focusCurrentOrFirstChannel();
+      });
+      this.categoryModalList.appendChild(item);
     });
   }
 
@@ -697,7 +807,7 @@ class FreeTVApp {
           <div class="channel-title" title="${channel.name}">${channel.name}</div>
           <div class="channel-group-tag">${channel.group}</div>
         </div>
-        <button class="channel-fav-btn ${isFav ? 'is-fav' : ''}" title="${isFav ? 'Удалить из избранного' : 'В избранное'}">★</button>
+        <button class="channel-fav-btn ${isFav ? 'is-fav' : ''}" tabindex="0" title="${isFav ? 'Удалить из избранного' : 'В избранное'}" aria-label="Избранное">★</button>
       `;
 
       item.addEventListener('click', (e) => {
@@ -709,6 +819,7 @@ class FreeTVApp {
           const isNowFav = this.favorites.has(channel.url);
           favBtn.classList.toggle('is-fav', isNowFav);
           favBtn.title = isNowFav ? 'Удалить из избранного' : 'В избранное';
+          this.showQuickOsd(isNowFav ? `★ Добавлено в избранное: ${channel.name}` : `☆ Удалено из избранного: ${channel.name}`);
           this.updateFavCount();
           this.updateFavButtonState();
           if (this.activeTab === 'fav') {
@@ -831,7 +942,7 @@ class FreeTVApp {
 
         if (epg.next && epg.next.title) {
           const nextStart = new Date(epg.next.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          this.epgNext.textContent = `| Далее в ${nextStart}: ${epg.next.title}`;
+          this.epgNext.textContent = `Далее в ${nextStart}: ${epg.next.title}`;
         } else {
           this.epgNext.textContent = '';
         }
@@ -1102,12 +1213,43 @@ class FreeTVApp {
     }
 
     // ==========================================
-    // 2. ЕСЛИ ОТКРЫТО МОДАЛЬНОЕ ОКНО НАСТРОЕК
+    // 2. ЕСЛИ ОТКРЫТО МОДАЛЬНОЕ ОКНО КАТЕГОРИЙ
+    // ==========================================
+    if (this.categoryModal && this.categoryModal.style.display !== 'none') {
+      if (key === 'Escape' || key === 'Back' || key === 'GoBack') {
+        this.closeCategoryModal();
+        return true;
+      }
+      const catItems = Array.from(this.categoryModalList.querySelectorAll('.category-modal-item'));
+      if (!catItems.length) return false;
+      let idx = catItems.indexOf(document.activeElement);
+      if (key === 'ArrowDown') {
+        idx = (idx + 1) % catItems.length;
+        catItems[idx].focus();
+        catItems[idx].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        return true;
+      }
+      if (key === 'ArrowUp') {
+        idx = (idx - 1 + catItems.length) % catItems.length;
+        catItems[idx].focus();
+        catItems[idx].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        return true;
+      }
+      if (key === 'Enter') {
+        if (document.activeElement && typeof document.activeElement.click === 'function') {
+          document.activeElement.click();
+        }
+        return true;
+      }
+      return true;
+    }
+
+    // ==========================================
+    // 3. ЕСЛИ ОТКРЫТО МОДАЛЬНОЕ ОКНО НАСТРОЕК (на ПК)
     // ==========================================
     if (this.settingsModal && this.settingsModal.style.display !== 'none') {
       if (key === 'Escape' || key === 'Back' || key === 'GoBack') {
         this.settingsModal.style.display = 'none';
-        if (this.settingsBtn) this.settingsBtn.focus();
         return true;
       }
       const focusables = Array.from(this.settingsModal.querySelectorAll('button, input, select')).filter(el => el.offsetParent !== null);
@@ -1133,18 +1275,29 @@ class FreeTVApp {
     }
 
     // ==========================================
-    // 3. ОСНОВНОЙ ТВ-ИНТЕРФЕЙС (СВОБОДНОЕ 2D ПЕРЕМЕЩЕНИЕ)
+    // 4. ОСНОВНОЙ ТВ-ИНТЕРФЕЙС (СВОБОДНОЕ 2D ПЕРЕМЕЩЕНИЕ)
     // ==========================================
     const activeEl = document.activeElement;
     const isChannel = activeEl && activeEl.classList.contains('channel-item');
+    const isChannelFav = activeEl && activeEl.classList.contains('channel-fav-btn');
     const isFilterTab = activeEl && activeEl.classList.contains('filter-tab');
-    const isCategory = activeEl === this.categorySelect;
-    const isSettings = activeEl === this.settingsBtn;
+    const isCategory = activeEl === this.categorySelectBtn || activeEl === this.categorySelect;
     const isSearch = activeEl === this.searchInput;
     const isFullscreenBtn = activeEl === this.fullscreenBtn;
 
+    // Быстрый хоткей добавления/удаления из избранного (клавиша F или 0 на пульте)
+    if (key === 'f' || key === 'F' || key === '0') {
+      if (isChannel) {
+        const favBtn = activeEl.querySelector('.channel-fav-btn');
+        if (favBtn) { favBtn.click(); return true; }
+      } else if (isChannelFav) {
+        activeEl.click();
+        return true;
+      }
+    }
+
     // Если фокус ни на чем в приложении не стоит — фокусируем текущий или первый канал
-    if (!isChannel && !isFilterTab && !isCategory && !isSettings && !isSearch && !isFullscreenBtn) {
+    if (!isChannel && !isChannelFav && !isFilterTab && !isCategory && !isSearch && !isFullscreenBtn) {
       this.focusCurrentOrFirstChannel();
       return true;
     }
@@ -1167,15 +1320,43 @@ class FreeTVApp {
         }
         return true;
       }
+      if (isChannelFav) {
+        const parentItem = activeEl.closest('.channel-item');
+        if (parentItem) {
+          let next = parentItem.nextElementSibling;
+          while (next && !next.classList.contains('channel-item')) {
+            next = next.nextElementSibling;
+          }
+          if (next) {
+            const nextFav = next.querySelector('.channel-fav-btn');
+            if (nextFav) {
+              nextFav.focus();
+            } else {
+              next.focus();
+            }
+            next.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            const items = this.channelList.querySelectorAll('.channel-item');
+            const currIdx = Array.from(items).indexOf(next);
+            if (currIdx >= items.length - 8) {
+              this.renderNextBatch();
+            }
+          }
+        }
+        return true;
+      }
       if (isCategory) {
         this.focusCurrentOrFirstChannel();
         return true;
       }
       if (isFilterTab) {
-        if (this.categorySelect) this.categorySelect.focus();
+        if (this.categorySelectBtn) {
+          this.categorySelectBtn.focus();
+        } else if (this.categorySelect) {
+          this.categorySelect.focus();
+        }
         return true;
       }
-      if (isSettings || isSearch) {
+      if (isSearch) {
         const tab = this.sidebar.querySelector('.filter-tab.active') || this.sidebar.querySelector('.filter-tab');
         if (tab) tab.focus();
         return true;
@@ -1200,8 +1381,35 @@ class FreeTVApp {
           prev.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         } else {
           // Самый верх списка каналов — переходим на селектор категорий
-          if (this.categorySelect) {
+          if (this.categorySelectBtn) {
+            this.categorySelectBtn.focus();
+          } else if (this.categorySelect) {
             this.categorySelect.focus();
+          }
+        }
+        return true;
+      }
+      if (isChannelFav) {
+        const parentItem = activeEl.closest('.channel-item');
+        if (parentItem) {
+          let prev = parentItem.previousElementSibling;
+          while (prev && !prev.classList.contains('channel-item')) {
+            prev = prev.previousElementSibling;
+          }
+          if (prev) {
+            const prevFav = prev.querySelector('.channel-fav-btn');
+            if (prevFav) {
+              prevFav.focus();
+            } else {
+              prev.focus();
+            }
+            prev.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          } else {
+            if (this.categorySelectBtn) {
+              this.categorySelectBtn.focus();
+            } else if (this.categorySelect) {
+              this.categorySelect.focus();
+            }
           }
         }
         return true;
@@ -1216,19 +1424,29 @@ class FreeTVApp {
         return true;
       }
       if (isSearch) {
-        if (this.settingsBtn) this.settingsBtn.focus();
-        return true;
+        return true; // Самый верх на ТВ
       }
       if (isFullscreenBtn) {
-        if (this.settingsBtn) this.settingsBtn.focus();
+        if (this.searchInput) this.searchInput.focus();
         return true;
       }
     }
 
     // --- НАЖАТИЕ ВПРАВО ---
     if (key === 'ArrowRight') {
-      if (isChannel || isCategory) {
-        // Переход из списка каналов или категорий на кнопку "Во весь экран"
+      if (isChannel) {
+        // Переход из строки канала на его звёздочку «Избранное»
+        const favBtn = activeEl.querySelector('.channel-fav-btn');
+        if (favBtn) {
+          favBtn.focus();
+          return true;
+        } else if (this.fullscreenBtn) {
+          this.fullscreenBtn.focus();
+          return true;
+        }
+      }
+      if (isChannelFav || isCategory) {
+        // Со звездочки или кнопки категорий переходим на «Во весь экран»
         if (this.fullscreenBtn) {
           this.fullscreenBtn.focus();
         }
@@ -1244,10 +1462,6 @@ class FreeTVApp {
         }
         return true;
       }
-      if (isSettings) {
-        if (this.searchInput) this.searchInput.focus();
-        return true;
-      }
       if (isSearch) {
         if (this.fullscreenBtn) this.fullscreenBtn.focus();
         return true;
@@ -1261,16 +1475,20 @@ class FreeTVApp {
         this.focusCurrentOrFirstChannel();
         return true;
       }
+      if (isChannelFav) {
+        // Со звёздочки возвращаемся на саму строку канала
+        const parentItem = activeEl.closest('.channel-item');
+        if (parentItem) {
+          parentItem.focus();
+          return true;
+        }
+      }
       if (isFilterTab) {
         const tabs = Array.from(this.sidebar.querySelectorAll('.filter-tab'));
         const idx = tabs.indexOf(activeEl);
         if (idx > 0) {
           tabs[idx - 1].focus();
         }
-        return true;
-      }
-      if (isSearch) {
-        if (this.settingsBtn) this.settingsBtn.focus();
         return true;
       }
     }
@@ -1285,9 +1503,12 @@ class FreeTVApp {
 
     // --- НАЖАТИЕ НАЗАД (BACK / ESCAPE) ---
     if (key === 'Escape' || key === 'Back' || key === 'GoBack') {
+      if (this.categoryModal && this.categoryModal.style.display !== 'none') {
+        this.closeCategoryModal();
+        return true;
+      }
       if (this.settingsModal && this.settingsModal.style.display !== 'none') {
         this.settingsModal.style.display = 'none';
-        if (this.settingsBtn) this.settingsBtn.focus();
         return true;
       }
       this.focusCurrentOrFirstChannel();
@@ -1379,6 +1600,7 @@ class FreeTVApp {
   }
 
   openSettingsModal() {
+    if (document.body.classList.contains('is-tv')) return;
     if (this.playlistUrlInput) this.playlistUrlInput.value = this.playlistUrl;
     if (this.settingsTotalChannels) this.settingsTotalChannels.textContent = this.channels.length;
     if (this.settingsVisibleChannels) this.settingsVisibleChannels.textContent = this.filteredChannels.length;

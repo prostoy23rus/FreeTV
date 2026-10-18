@@ -229,11 +229,69 @@ body {
   box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
 }
 
-/* Выбор категории через стильный дропдаун */
+/* Выбор категории через стильный дропдаун или ТВ-кнопку */
 .category-select-wrapper {
   padding: 8px 14px;
   background: #090e1c;
   border-bottom: 1px solid #1a2742;
+}
+
+.category-dropdown-btn {
+  width: 100%;
+  padding: 9px 12px;
+  background: #172339;
+  border: 1px solid #283958;
+  border-radius: 7px;
+  color: #e2e8f0;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.category-dropdown-btn:hover {
+  background: #1e2e4a;
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.category-dropdown-btn:focus,
+.category-dropdown-btn:focus-visible,
+.category-dropdown-btn.tv-focused {
+  outline: none !important;
+  border-color: #ffffff !important;
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 3px #ffffff, 0 0 16px rgba(56, 189, 248, 0.7) !important;
+  transform: scale(1.02);
+}
+
+.category-btn-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.selected-category-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.category-dropdown-arrow {
+  font-size: 10px;
+  color: #94a3b8;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.category-dropdown-btn:focus .category-dropdown-arrow {
+  color: #ffffff;
 }
 
 .category-dropdown {
@@ -390,6 +448,17 @@ body {
 .channel-fav-btn:hover {
   color: #fbbf24;
   transform: scale(1.2);
+}
+
+.channel-fav-btn:focus,
+.channel-fav-btn:focus-visible,
+.channel-fav-btn.tv-focused {
+  outline: none !important;
+  color: #fbbf24 !important;
+  transform: scale(1.35) !important;
+  box-shadow: 0 0 0 3px #fbbf24, 0 0 16px rgba(251, 191, 36, 0.7) !important;
+  background: rgba(251, 191, 36, 0.25) !important;
+  border-radius: 50% !important;
 }
 
 .channel-fav-btn.is-fav {
@@ -821,6 +890,85 @@ video {
   animation: fadein 0.2s ease-out;
 }
 
+/* Стили окна выбора категорий */
+.category-modal-content {
+  width: 520px !important;
+  max-width: 90vw !important;
+  max-height: 85vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.category-modal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 65vh;
+  padding: 14px 16px;
+}
+
+.category-modal-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 18px;
+  background: #111b2e;
+  border: 1.5px solid #1e2c47;
+  border-radius: 10px;
+  color: #f1f5f9;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.category-modal-item:hover {
+  background: #1a2a47;
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.category-modal-item:focus,
+.category-modal-item:focus-visible,
+.category-modal-item.tv-focused {
+  outline: none !important;
+  border-color: #ffffff !important;
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 3px #ffffff, 0 0 20px rgba(56, 189, 248, 0.7) !important;
+  transform: scale(1.02) !important;
+}
+
+.category-modal-item.active {
+  border-left: 5px solid #38bdf8;
+  background: #16243d;
+}
+
+.cat-modal-name {
+  flex: 1;
+}
+
+.cat-modal-count {
+  font-size: 13px;
+  font-weight: 700;
+  background: rgba(56, 189, 248, 0.18);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+
+.category-modal-item:focus .cat-modal-count,
+.category-modal-item:hover .cat-modal-count {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
 .modal-header {
   padding: 14px 18px;
   border-bottom: 1px solid #1a2742;
@@ -1126,14 +1274,103 @@ body.is-tv:not(.tv-fullscreen) .player-header {
   min-height: 64px !important;
 }
 
+/* На ТВ скрываем раздел настроек и подсказки клавиатуры */
+body.is-tv #settingsBtn,
+body.is-tv #settingsModal,
+body.is-tv .shortcuts-hint {
+  display: none !important;
+}
+
 body.is-tv:not(.tv-fullscreen) .epg-bar {
   display: flex !important;
   align-items: center !important;
-  justify-content: space-between !important;
-  padding: 10px 24px !important;
+  padding: 14px 28px !important;
   background: #0a1120 !important;
   border-top: 1px solid #1a2742 !important;
-  min-height: 60px !important;
+  min-height: 76px !important;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+body.is-tv .epg-now {
+  width: 100% !important;
+  max-width: 100% !important;
+  gap: 16px !important;
+}
+
+body.is-tv .epg-label {
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  padding: 6px 12px !important;
+  border-radius: 6px !important;
+  background: rgba(56, 189, 248, 0.2) !important;
+  border: 1px solid #38bdf8 !important;
+  color: #38bdf8 !important;
+  letter-spacing: 1px !important;
+}
+
+body.is-tv .epg-details {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  gap: 6px !important;
+}
+
+body.is-tv .epg-main-line {
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important;
+}
+
+body.is-tv .epg-title {
+  font-size: 21px !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  letter-spacing: 0.2px !important;
+}
+
+body.is-tv .epg-time-range {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #38bdf8 !important;
+  background: rgba(56, 189, 248, 0.15) !important;
+  border: 1px solid rgba(56, 189, 248, 0.35) !important;
+  padding: 4px 10px !important;
+  border-radius: 6px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+body.is-tv .epg-progress-container {
+  height: 5px !important;
+  background: #1e293b !important;
+  border-radius: 3px !important;
+  margin: 3px 0 !important;
+}
+
+body.is-tv .epg-sub-line {
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important;
+  font-size: 14px !important;
+  color: #94a3b8 !important;
+}
+
+body.is-tv .epg-next {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #7dd3fc !important;
+}
+
+body.is-tv .category-dropdown-btn {
+  padding: 13px 18px !important;
+  font-size: 16px !important;
+  border-radius: 9px !important;
+}
+
+body.is-tv .category-btn-icon {
+  font-size: 18px !important;
 }
 
 body.is-tv .channel-item {
@@ -1149,14 +1386,6 @@ body.is-tv .channel-title {
 body.is-tv .channel-thumb-box {
   width: 46px !important;
   height: 46px !important;
-}
-
-body.is-tv .epg-title {
-  font-size: 18px !important;
-}
-
-body.is-tv .epg-desc {
-  font-size: 14px !important;
 }
 
 body.is-tv .fullscreen-btn {

@@ -56,9 +56,14 @@
         <button class="filter-tab" data-tab="history">🕒 История</button>
       </div>
 
-      <!-- Выпадающий селектор категорий -->
+      <!-- Выпадающий селектор категорий с поддержкой ТВ-пульта -->
       <div class="category-select-wrapper">
-        <select id="categorySelect" class="category-dropdown">
+        <button id="categorySelectBtn" class="category-dropdown-btn" tabindex="0" title="Выбрать категорию (OK на пульте)">
+          <span class="category-btn-icon">📁</span>
+          <span id="selectedCategoryLabel" class="selected-category-label">Все категории</span>
+          <span class="category-dropdown-arrow">▼</span>
+        </button>
+        <select id="categorySelect" class="category-dropdown" tabindex="-1" style="display: none;">
           <option value="ALL">Все категории</option>
         </select>
       </div>
@@ -195,6 +200,20 @@
           <span>Открытый исходный код</span>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно выбора категорий для Android TV и пультов ДУ -->
+  <div class="modal" id="categoryModal" style="display: none;">
+    <div class="modal-content category-modal-content">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-icon">📁</span>
+          <h3>Категории каналов</h3>
+        </div>
+        <button class="close-modal-btn" id="closeCategoryModalBtn" title="Закрыть">&times;</button>
+      </div>
+      <div class="category-modal-list" id="categoryModalList"></div>
     </div>
   </div>
 
