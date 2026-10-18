@@ -128,6 +128,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public boolean isAndroidTv() {
+            if (getPackageName().endsWith(".tv")) return true;
             UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
             return uiModeManager != null && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION;
         }
@@ -680,6 +681,12 @@ public class MainActivity extends Activity {
             }
             if (keyCode == KeyEvent.KEYCODE_CHANNEL_DOWN || keyCode == KeyEvent.KEYCODE_PAGE_DOWN) {
                 dispatchJsEvent("ChannelDown");
+                return true;
+            }
+
+            // Меню / Информация на пульте Android TV
+            if (keyCode == KeyEvent.KEYCODE_MENU || keyCode == KeyEvent.KEYCODE_INFO || keyCode == KeyEvent.KEYCODE_GUIDE) {
+                dispatchJsEvent("Menu");
                 return true;
             }
 

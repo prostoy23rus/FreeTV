@@ -1016,32 +1016,78 @@ video {
 }
 
 /* Стили большого экрана Android TV (10-foot UI) */
+body.is-tv {
+  background: #070d18 !important;
+}
+
+body.is-tv .app-container {
+  display: flex !important;
+  flex-direction: row !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  position: relative !important;
+  background: #070d18 !important;
+}
+
 body.is-tv .sidebar {
+  display: flex !important;
   width: 440px !important;
   min-width: 400px !important;
+  height: 100vh !important;
+  position: relative !important;
+  z-index: 100 !important;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5) !important;
+}
+
+body.is-tv .player-area {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  height: 100vh !important;
+  position: relative !important;
+  z-index: 10 !important;
+  background: #000 !important;
+}
+
+body.is-tv .video-container {
+  flex: 1 !important;
+  display: flex !important;
+  position: relative !important;
+  background: #000 !important;
+  width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+}
+
+body.is-tv .player-header {
+  display: flex !important;
+}
+
+body.is-tv .epg-bar {
+  display: flex !important;
 }
 
 body.is-tv .channel-item {
-  padding: 16px 20px;
-  min-height: 66px;
+  padding: 16px 20px !important;
+  min-height: 66px !important;
 }
 
 body.is-tv .channel-title {
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 17px !important;
+  font-weight: 700 !important;
 }
 
 body.is-tv .channel-thumb-box {
-  width: 46px;
-  height: 46px;
+  width: 46px !important;
+  height: 46px !important;
 }
 
 body.is-tv .epg-title {
-  font-size: 18px;
+  font-size: 18px !important;
 }
 
 body.is-tv .epg-desc {
-  font-size: 14px;
+  font-size: 14px !important;
 }
 
 /* Крупный индикатор номера канала при наборе с пульта ДУ */
@@ -1067,9 +1113,10 @@ body.is-tv .epg-desc {
    📱 ОПТИМИЗАЦИЯ ДЛЯ СМАРТФОНОВ (ЧИСТЫЙ ВИДЕОПОТОК В ГОРИЗОНТАЛИ)
    ======================================================== */
 
-/* ГОРИЗОНТАЛЬНЫЙ РЕЖИМ (LANDSCAPE) — ТОЛЬКО ВИДЕОПОТОК, НИКАКОГО ИНТЕРФЕЙСА */
+/* ГОРИЗОНТАЛЬНЫЙ РЕЖИМ (LANDSCAPE) ДЛЯ ТЕЛЕФОНОВ — ТОЛЬКО ВИДЕОПОТОК, НИКАКОГО ИНТЕРФЕЙСА */
 @media (orientation: landscape) {
-  html, body {
+  body.is-mobile,
+  body:not(.is-tv):not(.is-desktop) {
     width: 100% !important;
     height: 100% !important;
     max-width: 100% !important;
@@ -1080,7 +1127,8 @@ body.is-tv .epg-desc {
     padding: 0 !important;
   }
 
-  .app-container {
+  body.is-mobile .app-container,
+  body:not(.is-tv):not(.is-desktop) .app-container {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
@@ -1094,18 +1142,25 @@ body.is-tv .epg-desc {
     padding: 0 !important;
   }
 
-  /* Полностью скрываем весь интерфейс при горизонтальном положении */
-  .sidebar,
-  .player-header,
-  .epg-bar,
-  .expand-sidebar-btn,
-  .shortcuts-hint,
-  .sidebar-footer {
+  /* Полностью скрываем весь интерфейс при горизонтальном положении смартфона */
+  body.is-mobile .sidebar,
+  body.is-mobile .player-header,
+  body.is-mobile .epg-bar,
+  body.is-mobile .expand-sidebar-btn,
+  body.is-mobile .shortcuts-hint,
+  body.is-mobile .sidebar-footer,
+  body:not(.is-tv):not(.is-desktop) .sidebar,
+  body:not(.is-tv):not(.is-desktop) .player-header,
+  body:not(.is-tv):not(.is-desktop) .epg-bar,
+  body:not(.is-tv):not(.is-desktop) .expand-sidebar-btn,
+  body:not(.is-tv):not(.is-desktop) .shortcuts-hint,
+  body:not(.is-tv):not(.is-desktop) .sidebar-footer {
     display: none !important;
   }
 
-  /* Видео разворачивается строго на весь экран */
-  .player-area {
+  /* Видео разворачивается строго на весь экран смартфона */
+  body.is-mobile .player-area,
+  body:not(.is-tv):not(.is-desktop) .player-area {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
@@ -1120,7 +1175,8 @@ body.is-tv .epg-desc {
     border: none !important;
   }
 
-  .video-container {
+  body.is-mobile .video-container,
+  body:not(.is-tv):not(.is-desktop) .video-container {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
@@ -1135,7 +1191,8 @@ body.is-tv .epg-desc {
     overflow: hidden !important;
   }
 
-  #videoPlayer {
+  body.is-mobile #videoPlayer,
+  body:not(.is-tv):not(.is-desktop) #videoPlayer {
     width: 100% !important;
     height: 100% !important;
     object-fit: contain;

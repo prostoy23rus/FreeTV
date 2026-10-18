@@ -12,8 +12,32 @@ android {
         targetSdk 34
         versionCode 1
         versionName "1.0.0"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    flavorDimensions "device"
+
+    productFlavors {
+        mobile {
+            dimension "device"
+            applicationId "com.freetv.player.mobile"
+            versionName "1.0.0-mobile"
+            manifestPlaceholders = [
+                appName: "FreeTV Mobile",
+                screenOrientation: "unspecified",
+                leanbackRequired: "false"
+            ]
+        }
+        tv {
+            dimension "device"
+            applicationId "com.freetv.player.tv"
+            versionName "1.0.0-tv"
+            manifestPlaceholders = [
+                appName: "FreeTV",
+                screenOrientation: "sensorLandscape",
+                leanbackRequired: "true"
+            ]
+        }
     }
 
     buildTypes {

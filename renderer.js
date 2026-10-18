@@ -36,8 +36,16 @@ class FreeTVApp {
   }
 
   initDOMElements() {
-    if (window.AndroidBridge && typeof window.AndroidBridge.isAndroidTv === 'function' && window.AndroidBridge.isAndroidTv()) {
-      document.body.classList.add('is-tv');
+    if (window.AndroidBridge) {
+      if (typeof window.AndroidBridge.isAndroidTv === 'function' && window.AndroidBridge.isAndroidTv()) {
+        document.body.classList.add('is-tv');
+        document.body.classList.remove('is-mobile');
+      } else {
+        document.body.classList.add('is-mobile');
+        document.body.classList.remove('is-tv');
+      }
+    } else {
+      document.body.classList.add('is-desktop');
     }
 
     this.sidebar = document.getElementById('sidebar');
@@ -435,6 +443,12 @@ class FreeTVApp {
           this.toggleSidebar(false);
         } else if (document.fullscreenElement) {
           document.exitFullscreen();
+        }
+      } else if (e.key === 'm' || e.key === 'M' || e.key === 'Menu') {
+        if (this.settingsModal && this.settingsModal.style.display !== 'none') {
+          this.settingsModal.style.display = 'none';
+        } else {
+          this.openSettingsModal();
         }
       } else if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) {
         e.preventDefault();
