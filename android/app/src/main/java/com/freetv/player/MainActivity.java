@@ -220,18 +220,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public boolean isAndroidTv() {
-            if (getPackageName().endsWith(".tv")) return true;
-            UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
-            if (uiModeManager != null && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
-                return true;
-            }
-            android.content.pm.PackageManager pm = getPackageManager();
-            if (pm != null) {
-                if (pm.hasSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK)) return true;
-                if (pm.hasSystemFeature("android.hardware.type.television")) return true;
-                if (!pm.hasSystemFeature(android.content.pm.PackageManager.FEATURE_TOUCHSCREEN)) return true;
-            }
-            return false;
+            return MainActivity.this.isAndroidTv();
         }
 
         @JavascriptInterface
@@ -389,6 +378,21 @@ public class MainActivity extends Activity {
         }
     }
 
+    public boolean isAndroidTv() {
+        if (getPackageName().endsWith(".tv")) return true;
+        UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
+        if (uiModeManager != null && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+            return true;
+        }
+        android.content.pm.PackageManager pm = getPackageManager();
+        if (pm != null) {
+            if (pm.hasSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK)) return true;
+            if (pm.hasSystemFeature("android.hardware.type.television")) return true;
+            if (!pm.hasSystemFeature(android.content.pm.PackageManager.FEATURE_TOUCHSCREEN)) return true;
+        }
+        return false;
+    }
+
     @Override
     @SuppressLint("SetJavaScriptEnabled")
     protected void onCreate(Bundle savedInstanceState) {
@@ -397,8 +401,8 @@ public class MainActivity extends Activity {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        // Полноэкранный режим на весь экран смартфона без черных полос у выреза/челки камеры
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        // Полноэкранный режим на весь экран смартфона без черных полос у выреза/челки камеры (только для телефонов, не для ТВ)
+        if (!isAndroidTv() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             WindowManager.LayoutParams lp = getWindow().getAttributes();
             if (Build.VERSION.SDK_INT >= 30) {
                 lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
@@ -675,9 +679,13 @@ public class MainActivity extends Activity {
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
         settings.setAllowFileAccessFromFileURLs(true);
-        settings.setAllowUniversalAccessFromFileURLs(true);
-        settings.setUseWideViewPort(true);
-        settings.setLoadWithOverviewMode(true);
+        if (isAndroidTv()) {
+            settings.setUseWideViewPort(false);
+            settings.setLoadWithOverviewMode(false);
+        } else {
+            settings.setUseWideViewPort(true);
+            settings.setLoadWithOverviewMode(true);
+        }
         settings.setSupportZoom(false);
         settings.setBuiltInZoomControls(false);
 

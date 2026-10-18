@@ -61,7 +61,14 @@ class FreeTVApp {
     this.loaderText = document.getElementById('loaderText');
     this.errorBanner = document.getElementById('errorBanner');
     this.errorText = document.getElementById('errorText');
-    this.retryBtn = document.getElementById('retryBtn');
+    this.errorRetryStatus = document.getElementById('errorRetryStatus');
+    this.errorRetryText = document.getElementById('errorRetryText');
+    this.aspectRatioBtn = document.getElementById('aspectRatioBtn');
+    this.aspectRatioBtnText = document.getElementById('aspectRatioBtnText');
+    this.retryAttempt = 0;
+    this.retryTimer = null;
+    this.currentAspectMode = localStorage.getItem('freetv_aspect_mode') || 'safe';
+    this.setAspectRatio(this.currentAspectMode);
     this.quickOsd = document.getElementById('quickOsd');
 
     this.channelListContainer = document.getElementById('channelListContainer');
@@ -356,14 +363,29 @@ class FreeTVApp {
       showControls();
     });
 
-    this.video.addEventListener('playing', () => {
+    const onPlaybackStarted = () => {
       if (this.connectionTimer) {
         clearTimeout(this.connectionTimer);
         this.connectionTimer = null;
       }
+      if (this.retryTimer) {
+        clearTimeout(this.retryTimer);
+        this.retryTimer = null;
+      }
+      this.retryAttempt = 0;
       this.hideLoader();
+      this.hideError();
       this.streamStatus.textContent = '● В ЭФИРЕ';
       this.streamStatus.className = 'status-indicator live';
+    };
+
+    this.video.addEventListener('playing', onPlaybackStarted);
+    this.video.addEventListener('loadeddata', onPlaybackStarted);
+    this.video.addEventListener('canplay', onPlaybackStarted);
+    this.video.addEventListener('timeupdate', () => {
+      if (this.video.currentTime > 0) {
+        onPlaybackStarted();
+      }
     });
 
     this.video.addEventListener('waiting', () => {
@@ -373,17 +395,23 @@ class FreeTVApp {
       }
     });
 
-    // Двойной клик по видео — в гориз. режиме переключение масштабирования (пропорции 16:9 / во весь экран), иначе Fullscreen
-    this.video.addEventListener('dblclick', () => {
-      if (window.matchMedia('(orientation: landscape)').matches) {
-        const isCover = this.video.style.objectFit === 'cover';
-        this.video.style.objectFit = isCover ? 'contain' : 'cover';
-        this.showQuickOsd(isCover ? 'Масштаб: 16:9 (оригинал)' : 'Масштаб: Во весь экран (без полос)');
-      } else if (!document.fullscreenElement) {
-        this.videoContainer.requestFullscreen().catch(err => console.error(err));
-      } else {
-        document.exitFullscreen();
+    this.video.addEventListener('error', (e) => {
+      console.warn('Native video error event:', e);
+      if (this.streamStatus.textContent !== '● В ЭФИРЕ') {
+        this.handleStreamFailure('Ошибка воспроизведения видео');
       }
+    });
+
+    if (this.aspectRatioBtn) {
+      this.aspectRatioBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.toggleAspectRatio();
+      });
+    }
+
+    // Двойной клик по видео — переключение масштабирования
+    this.video.addEventListener('dblclick', () => {
+      this.toggleAspectRatio();
     });
 
     // Бесконечный скролл (Infinite Scroll) списка каналов
@@ -391,13 +419,6 @@ class FreeTVApp {
       const { scrollTop, scrollHeight, clientHeight } = this.channelListContainer;
       if (scrollTop + clientHeight >= scrollHeight - 300) {
         this.renderNextBatch();
-      }
-    });
-
-    // Retry
-    this.retryBtn.addEventListener('click', () => {
-      if (this.currentChannel) {
-        this.playChannel(this.currentChannel);
       }
     });
 
@@ -1103,8 +1124,59 @@ class FreeTVApp {
     this.epgProgressBar.style.width = `${percent.toFixed(1)}%`;
   }
 
-  loadStream(url) {
-    this.showLoader('Подключение к потоку...');
+  toggleAspectRatio() {
+    const modes = [
+      { id: 'safe', name: 'Защитные рамки ТВ (Overscan Safe)' },
+      { id: 'contain', name: 'Вписать (Оригинал 100%)' },
+      { id: 'cover', name: 'Заполнение экрана (Без полос)' },
+      { id: 'fill', name: 'Растянуть на весь экран (16:9)' }
+    ];
+    let currentIdx = modes.findIndex(m => m.id === this.currentAspectMode);
+    if (currentIdx === -1) currentIdx = 0;
+    const nextIdx = (currentIdx + 1) % modes.length;
+    const nextMode = modes[nextIdx];
+    this.setAspectRatio(nextMode.id);
+    this.showQuickOsd(`📺 ${nextMode.name}`);
+  }
+
+  setAspectRatio(modeId) {
+    this.currentAspectMode = modeId;
+    localStorage.setItem('freetv_aspect_mode', modeId);
+    if (this.videoContainer) {
+      this.videoContainer.classList.remove('aspect-safe', 'aspect-cover', 'aspect-fill');
+      document.body.classList.remove('aspect-safe', 'aspect-cover', 'aspect-fill');
+      if (modeId === 'safe') {
+        this.videoContainer.classList.add('aspect-safe');
+        document.body.classList.add('aspect-safe');
+      } else if (modeId === 'cover') {
+        this.videoContainer.classList.add('aspect-cover');
+        document.body.classList.add('aspect-cover');
+      } else if (modeId === 'fill') {
+        this.videoContainer.classList.add('aspect-fill');
+        document.body.classList.add('aspect-fill');
+      }
+    }
+    if (this.aspectRatioBtnText) {
+      const shortLabels = {
+        safe: 'Рамки ТВ',
+        contain: 'Вписать',
+        cover: 'Без полос',
+        fill: '16:9'
+      };
+      this.aspectRatioBtnText.textContent = shortLabels[modeId] || 'Масштаб';
+    }
+  }
+
+  loadStream(url, isAutoRetry = false) {
+    if (!isAutoRetry) {
+      this.retryAttempt = 0;
+      if (this.retryTimer) {
+        clearTimeout(this.retryTimer);
+        this.retryTimer = null;
+      }
+    }
+
+    this.showLoader(isAutoRetry ? `Повторное подключение (${this.retryAttempt}/4)...` : 'Подключение к потоку...');
     this.hideError();
 
     if (this.connectionTimer) {
@@ -1112,47 +1184,63 @@ class FreeTVApp {
       this.connectionTimer = null;
     }
 
+    // Увеличенный таймаут до 20 секунд перед автоповтором для медленных IPTV потоков
     this.connectionTimer = setTimeout(() => {
       if (this.streamStatus.textContent !== '● В ЭФИРЕ') {
-        this.showError('Поток временно недоступен или сервер не отвечает');
+        this.handleStreamFailure('Сервер потока не отвечает (таймаут)');
       }
-    }, 12000);
+    }, 20000);
 
     if (this.hls) {
       this.hls.destroy();
       this.hls = null;
     }
 
+    // Если это повторная попытка >= 2 и Hls давал сбой, пробуем прямое нативное воспроизведение через video.src
+    if (isAutoRetry && this.retryAttempt >= 2) {
+      this.loadNativeStream(url);
+      return;
+    }
+
     const isHls = url.includes('.m3u8') || url.includes('live') || url.includes('stream') || !url.endsWith('.mp4');
 
     if (Hls.isSupported() && isHls) {
+      const isTv = document.body.classList.contains('is-tv');
       this.hls = new Hls({
-        enableWorker: true,
+        enableWorker: !isTv, // На ТВ WebView WebWorker часто исчерпывает память при demux
         lowLatencyMode: false,
         backBufferLength: 30,
-        maxBufferLength: 45,
-        maxMaxBufferLength: 90,
-        maxBufferSize: 80 * 1000 * 1000,
+        maxBufferLength: 40,
+        maxMaxBufferLength: 60,
+        maxBufferSize: 60 * 1000 * 1000,
         maxBufferHole: 0.8,
         highBufferWatchdogPeriod: 3,
         nudgeOffset: 0.1,
         nudgeMaxRetry: 5,
-        liveSyncDurationCount: 4,
-        liveMaxLatencyDurationCount: 10,
+        liveSyncDurationCount: 3,
+        liveMaxLatencyDurationCount: 8,
         enableSoftwareAES: true,
         manifestLoadingTimeOut: 20000,
+        manifestLoadingMaxRetry: 5,
+        manifestLoadingRetryDelay: 1000,
+        manifestLoadingMaxRetryTimeout: 30000,
         levelLoadingTimeOut: 20000,
-        fragLoadingTimeOut: 20000
+        levelLoadingMaxRetry: 5,
+        levelLoadingRetryDelay: 1000,
+        fragLoadingTimeOut: 20000,
+        fragLoadingMaxRetry: 6,
+        fragLoadingRetryDelay: 1000,
+        startFragPrefetch: true
       });
 
       this.hls.loadSource(url);
       this.hls.attachMedia(this.video);
 
       this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        this.showLoader('Буферизация потока...');
+        this.showLoader('Буферизация видео...');
         this.video.muted = false;
         this.video.play().catch(e => {
-          console.log('Autoplay handled, retrying unmuted:', e);
+          console.log('Autoplay unmuted handled, retrying muted:', e);
           this.video.muted = true;
           this.video.play().then(() => {
             this.video.muted = false;
@@ -1160,20 +1248,19 @@ class FreeTVApp {
         });
       });
 
-      let networkRetryCount = 0;
+      let hlsNetworkRetries = 0;
       this.hls.on(Hls.Events.ERROR, (event, data) => {
         if (data.fatal) {
           console.warn('HLS fatal error:', data.type, data.details);
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
-              networkRetryCount++;
-              if (networkRetryCount <= 2) {
-                console.log(`[HLS] Network error, retry #${networkRetryCount}...`);
+              hlsNetworkRetries++;
+              if (hlsNetworkRetries <= 3) {
+                console.log(`[HLS] Network error, HLS retry #${hlsNetworkRetries}...`);
                 this.hls.startLoad();
               } else {
-                console.warn('[HLS] Max network retries reached');
-                this.showError('Поток временно недоступен или сервер не отвечает');
-                this.hls.destroy();
+                console.warn('[HLS] Max HLS network retries reached');
+                this.handleStreamFailure('Ошибка сети при загрузке потока');
               }
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
@@ -1181,8 +1268,7 @@ class FreeTVApp {
               this.hls.recoverMediaError();
               break;
             default:
-              this.showError('Поток временно недоступен или сервер не отвечает');
-              this.hls.destroy();
+              this.handleStreamFailure('Формат потока не поддерживается или сервер разорвал соединение');
               break;
           }
         } else if (data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR) {
@@ -1191,18 +1277,43 @@ class FreeTVApp {
           }
         }
       });
-    } else if (this.video.canPlayType('application/vnd.apple.mpegurl') || !isHls) {
-      this.video.src = url;
-      this.video.addEventListener('loadedmetadata', () => {
-        this.hideLoader();
-        this.streamStatus.textContent = '● В ЭФИРЕ';
-        this.streamStatus.className = 'status-indicator live';
-        this.video.play().catch(e => console.log(e));
-      }, { once: true });
+    } else {
+      this.loadNativeStream(url);
+    }
+  }
 
-      this.video.addEventListener('error', () => {
-        this.showError('Ошибка воспроизведения видео');
-      }, { once: true });
+  loadNativeStream(url) {
+    if (this.hls) {
+      this.hls.destroy();
+      this.hls = null;
+    }
+    this.video.src = url;
+    this.video.play().catch(e => console.log('Native play catch:', e));
+  }
+
+  handleStreamFailure(reason) {
+    if (this.hls) {
+      this.hls.destroy();
+      this.hls = null;
+    }
+
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
+
+    const MAX_RETRIES = 4;
+    if (this.retryAttempt < MAX_RETRIES && this.currentChannel) {
+      this.retryAttempt++;
+      this.showError('Поток временно недоступен или сервер не отвечает', true);
+      this.retryTimer = setTimeout(() => {
+        if (this.currentChannel) {
+          console.log(`[AutoRetry] Attempt ${this.retryAttempt}/${MAX_RETRIES} for ${this.currentChannel.name}`);
+          this.loadStream(this.currentChannel.url, true);
+        }
+      }, 2500);
+    } else {
+      this.showError('Поток временно недоступен на сервере трансляции. Выберите другой канал.', false);
     }
   }
 
@@ -1228,16 +1339,28 @@ class FreeTVApp {
     this.videoLoader.style.display = 'none';
   }
 
-  showError(msg) {
+  showError(msg, isRetrying = false) {
     this.hideLoader();
-    this.streamStatus.textContent = 'Ошибка';
+    this.streamStatus.textContent = isRetrying ? 'Автоповтор...' : 'Ошибка';
     this.streamStatus.className = 'status-indicator';
     this.errorText.textContent = msg;
+
+    if (this.errorRetryStatus && this.errorRetryText) {
+      if (isRetrying) {
+        this.errorRetryText.textContent = `Автоповтор подключения (${this.retryAttempt}/4)...`;
+        this.errorRetryStatus.style.display = 'flex';
+      } else {
+        this.errorRetryStatus.style.display = 'none';
+      }
+    }
     this.errorBanner.style.display = 'flex';
   }
 
   hideError() {
     this.errorBanner.style.display = 'none';
+    if (this.errorRetryStatus) {
+      this.errorRetryStatus.style.display = 'none';
+    }
   }
 
   toggleTvFullscreen(force) {
@@ -1295,12 +1418,16 @@ class FreeTVApp {
         }
         return true;
       }
+      if (key === 'ArrowLeft' || key === 'ArrowRight') {
+        this.toggleAspectRatio();
+        return true;
+      }
       if (key === 'Enter') {
         if (this.video.paused) this.video.play();
         else this.video.pause();
         return true;
       }
-      return true; // В полноэкранном режиме поглощаем остальные стрелки
+      return true; // В полноэкранном режиме поглощаем остальные клавиши
     }
 
     // ==========================================
@@ -1375,6 +1502,7 @@ class FreeTVApp {
     const isCategory = activeEl === this.categorySelectBtn || activeEl === this.categorySelect;
     const isSearch = activeEl === this.searchInput;
     const isFullscreenBtn = activeEl === this.fullscreenBtn;
+    const isAspectBtn = activeEl === this.aspectRatioBtn;
 
     // Быстрый хоткей добавления/удаления из избранного (клавиша F или 0 на пульте)
     if (key === 'f' || key === 'F' || key === '0') {
@@ -1388,7 +1516,7 @@ class FreeTVApp {
     }
 
     // Если фокус ни на чем в приложении не стоит — фокусируем текущий или первый канал
-    if (!isChannel && !isChannelFav && !isFilterTab && !isCategory && !isSearch && !isFullscreenBtn) {
+    if (!isChannel && !isChannelFav && !isFilterTab && !isCategory && !isSearch && !isFullscreenBtn && !isAspectBtn) {
       this.focusCurrentOrFirstChannel();
       return true;
     }
@@ -1452,10 +1580,7 @@ class FreeTVApp {
         if (tab) tab.focus();
         return true;
       }
-      if (isFullscreenBtn) {
-        if (this.errorBanner && this.errorBanner.style.display !== 'none' && this.retryBtn) {
-          this.retryBtn.focus();
-        }
+      if (isFullscreenBtn || isAspectBtn) {
         return true;
       }
     }
@@ -1517,7 +1642,7 @@ class FreeTVApp {
       if (isSearch) {
         return true; // Самый верх на ТВ
       }
-      if (isFullscreenBtn) {
+      if (isFullscreenBtn || isAspectBtn) {
         if (this.searchInput) this.searchInput.focus();
         return true;
       }
@@ -1531,14 +1656,19 @@ class FreeTVApp {
         if (favBtn) {
           favBtn.focus();
           return true;
+        } else if (this.aspectRatioBtn) {
+          this.aspectRatioBtn.focus();
+          return true;
         } else if (this.fullscreenBtn) {
           this.fullscreenBtn.focus();
           return true;
         }
       }
       if (isChannelFav || isCategory) {
-        // Со звездочки или кнопки категорий переходим на «Во весь экран»
-        if (this.fullscreenBtn) {
+        // Со звездочки или кнопки категорий переходим на кнопку масштаба или «Во весь экран»
+        if (this.aspectRatioBtn) {
+          this.aspectRatioBtn.focus();
+        } else if (this.fullscreenBtn) {
           this.fullscreenBtn.focus();
         }
         return true;
@@ -1548,12 +1678,19 @@ class FreeTVApp {
         const idx = tabs.indexOf(activeEl);
         if (idx >= 0 && idx < tabs.length - 1) {
           tabs[idx + 1].focus();
+        } else if (this.aspectRatioBtn) {
+          this.aspectRatioBtn.focus();
         } else if (this.fullscreenBtn) {
           this.fullscreenBtn.focus();
         }
         return true;
       }
       if (isSearch) {
+        if (this.aspectRatioBtn) this.aspectRatioBtn.focus();
+        else if (this.fullscreenBtn) this.fullscreenBtn.focus();
+        return true;
+      }
+      if (isAspectBtn) {
         if (this.fullscreenBtn) this.fullscreenBtn.focus();
         return true;
       }
@@ -1562,7 +1699,14 @@ class FreeTVApp {
     // --- НАЖАТИЕ ВЛЕВО ---
     if (key === 'ArrowLeft') {
       if (isFullscreenBtn) {
-        // Возврат из кнопки "Во весь экран" обратно в список каналов
+        if (this.aspectRatioBtn) {
+          this.aspectRatioBtn.focus();
+        } else {
+          this.focusCurrentOrFirstChannel();
+        }
+        return true;
+      }
+      if (isAspectBtn) {
         this.focusCurrentOrFirstChannel();
         return true;
       }
@@ -1586,6 +1730,10 @@ class FreeTVApp {
 
     // --- НАЖАТИЕ ОК / ENTER (ВЫБОР ДЕЙСТВИЯ) ---
     if (key === 'Enter') {
+      if (isAspectBtn) {
+        this.toggleAspectRatio();
+        return true;
+      }
       if (isSearch) {
         if (document.body.classList.contains('is-tv') && window.AndroidBridge && typeof window.AndroidBridge.openSearchDialog === 'function') {
           window.AndroidBridge.openSearchDialog(this.searchInput.value || '');

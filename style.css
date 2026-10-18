@@ -795,6 +795,33 @@ body.is-tv .splash-progress-track {
   font-size: 16px;
 }
 
+.aspect-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #172339;
+  border: 1px solid #283958;
+  color: #f1f5f9;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  touch-action: manipulation;
+}
+
+.aspect-btn:hover,
+.aspect-btn:focus,
+.aspect-btn:focus-visible {
+  background: #0284c7 !important;
+  border-color: #38bdf8 !important;
+  color: #ffffff !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px #38bdf8, 0 0 16px rgba(56, 189, 248, 0.5) !important;
+  transform: scale(1.05);
+}
+
 .header-controls {
   display: flex;
   align-items: center;
@@ -899,20 +926,26 @@ video {
   font-size: 34px;
 }
 
-.retry-btn {
-  background: #ef4444;
-  color: white;
-  border: none;
-  border-radius: 7px;
-  padding: 8px 18px;
+.error-retry-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(30, 41, 59, 0.7);
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(56, 189, 248, 0.3);
   font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.2s;
+  color: #38bdf8;
+  margin-top: 4px;
 }
 
-.retry-btn:hover {
-  opacity: 0.9;
+.mini-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(56, 189, 248, 0.3);
+  border-top: 2px solid #38bdf8;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
 }
 
 .quick-osd {
@@ -1572,7 +1605,8 @@ body.is-tv .channel-thumb-box {
   height: 46px !important;
 }
 
-body.is-tv .fullscreen-btn {
+body.is-tv .fullscreen-btn,
+body.is-tv .aspect-btn {
   padding: 10px 20px !important;
   font-size: 15px !important;
   border-radius: 9px !important;
@@ -1582,7 +1616,9 @@ body.is-tv .fullscreen-btn {
 }
 
 body.is-tv .fullscreen-btn:focus,
-body.is-tv .fullscreen-btn:hover {
+body.is-tv .fullscreen-btn:hover,
+body.is-tv .aspect-btn:focus,
+body.is-tv .aspect-btn:hover {
   background: #0284c7 !important;
   border-color: #ffffff !important;
   color: #ffffff !important;
@@ -1605,12 +1641,15 @@ body.tv-fullscreen .app-container {
   left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
   background: #000 !important;
   overflow: hidden !important;
+  box-sizing: border-box !important;
 }
 
 body.tv-fullscreen .player-area {
@@ -1619,13 +1658,16 @@ body.tv-fullscreen .player-area {
   left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
   z-index: 99999 !important;
   background: #000 !important;
   margin: 0 !important;
   padding: 0 !important;
   border: none !important;
+  box-sizing: border-box !important;
 }
 
 body.tv-fullscreen .video-container {
@@ -1634,20 +1676,52 @@ body.tv-fullscreen .video-container {
   left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  max-height: 100vh !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
   background: #000 !important;
   margin: 0 !important;
   padding: 0 !important;
   overflow: hidden !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 body.tv-fullscreen #videoPlayer {
-  width: 100vw !important;
-  height: 100vh !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
   object-fit: contain !important;
   background: #000 !important;
+  box-sizing: border-box !important;
+}
+
+/* Режимы масштабирования / защита от TV Overscan (чтобы видео не уходило за рамки ТВ) */
+body.tv-fullscreen .video-container.aspect-safe,
+body.tv-fullscreen.aspect-safe .video-container {
+  padding: 2.5vh 3.5vw !important;
+  box-sizing: border-box !important;
+}
+
+body.tv-fullscreen .video-container.aspect-safe #videoPlayer,
+body.tv-fullscreen.aspect-safe #videoPlayer {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+
+body.tv-fullscreen .video-container.aspect-cover #videoPlayer,
+body.tv-fullscreen.aspect-cover #videoPlayer {
+  object-fit: cover !important;
+}
+
+body.tv-fullscreen .video-container.aspect-fill #videoPlayer,
+body.tv-fullscreen.aspect-fill #videoPlayer {
+  object-fit: fill !important;
 }
 
 /* Крупный индикатор номера канала при наборе с пульта ДУ */

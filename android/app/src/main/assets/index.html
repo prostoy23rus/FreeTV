@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#070d18">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -124,7 +124,10 @@
         <div class="error-banner" id="errorBanner" style="display: none;">
           <div class="error-icon">⚠️</div>
           <div id="errorText">Поток временно недоступен</div>
-          <button id="retryBtn" class="retry-btn">Повторить попытку</button>
+          <div class="error-retry-status" id="errorRetryStatus" style="display: none;">
+            <div class="mini-spinner"></div>
+            <span id="errorRetryText">Автоповтор подключения...</span>
+          </div>
         </div>
         <div class="quick-osd" id="quickOsd" style="display: none;"></div>
       </div>
@@ -146,6 +149,10 @@
           </div>
         </div>
         <div class="header-right">
+          <button id="aspectRatioBtn" class="action-btn aspect-btn" title="Масштаб видео (Стрелки ◄/► в полноэкранном режиме)">
+            <span class="btn-icon">📺</span>
+            <span class="btn-text" id="aspectRatioBtnText">Масштаб</span>
+          </button>
           <button id="fullscreenBtn" class="action-btn fullscreen-btn" title="Во весь экран (F)">
             <span class="btn-icon">⛶</span>
             <span class="btn-text">Во весь экран</span>
