@@ -9,6 +9,7 @@ on:
       - 'style.css'
       - 'index.html'
       - 'freetv_playlist.m3u'
+      - 'RELEASE_NOTES.md'
   workflow_dispatch:
 
 jobs:
@@ -60,6 +61,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.0
+          name: FreeTV Player v1.0.0 (Windows, Mobile & Android TV)
+          body_path: RELEASE_NOTES.md
           files: |
             release-apk/FreeTV.Android.Mobile.1.0.0.apk
             release-apk/FreeTV.Android.TV.1.0.0.apk
