@@ -308,9 +308,13 @@ class FreeTVApp {
       }
     });
 
-    // Двойной клик по видео — полноэкранный режим
+    // Двойной клик по видео — в гориз. режиме переключение масштабирования (пропорции 16:9 / во весь экран), иначе Fullscreen
     this.video.addEventListener('dblclick', () => {
-      if (!document.fullscreenElement) {
+      if (window.matchMedia('(orientation: landscape)').matches) {
+        const isCover = this.video.style.objectFit === 'cover';
+        this.video.style.objectFit = isCover ? 'contain' : 'cover';
+        this.showQuickOsd(isCover ? 'Масштаб: 16:9 (оригинал)' : 'Масштаб: Во весь экран (без полос)');
+      } else if (!document.fullscreenElement) {
         this.videoContainer.requestFullscreen().catch(err => console.error(err));
       } else {
         document.exitFullscreen();
@@ -648,13 +652,21 @@ class FreeTVApp {
       `;
 
       item.addEventListener('click', (e) => {
-        if (e.target.classList.contains('channel-fav-btn')) {
+        const favBtn = e.target.closest('.channel-fav-btn');
+        if (favBtn) {
+          e.preventDefault();
           e.stopPropagation();
           this.toggleFavorite(channel);
+          const isNowFav = this.favorites.has(channel.url);
+          favBtn.classList.toggle('is-fav', isNowFav);
+          favBtn.title = isNowFav ? 'Удалить из избранного' : 'В избранное';
           this.updateFavCount();
           this.updateFavButtonState();
-          if (this.activeTab === 'fav') this.applyFilters();
-          else this.updateActiveItemVisuals();
+          if (this.activeTab === 'fav') {
+            this.applyFilters();
+          } else {
+            this.updateActiveItemVisuals();
+          }
           return;
         }
         this.playChannel(channel);
@@ -701,7 +713,9 @@ class FreeTVApp {
 
       const favBtn = el.querySelector('.channel-fav-btn');
       if (favBtn) {
-        favBtn.classList.toggle('is-fav', this.favorites.has(url));
+        const isFav = this.favorites.has(url);
+        favBtn.classList.toggle('is-fav', isFav);
+        favBtn.title = isFav ? 'Удалить из избранного' : 'В избранное';
       }
     });
   }

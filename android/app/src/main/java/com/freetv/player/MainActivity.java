@@ -22,6 +22,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -34,6 +35,9 @@ public class MainActivity extends Activity {
     private FrameLayout customViewContainer;
     private WebChromeClient.CustomViewCallback customViewCallback;
     private View customView;
+
+    private long backPressedTime = 0;
+    private Toast backToast;
 
     private static final String DESKTOP_USER_AGENT = 
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
@@ -99,6 +103,18 @@ public class MainActivity extends Activity {
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        // Полноэкранный режим на весь экран смартфона без черных полос у выреза/челки камеры
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            if (Build.VERSION.SDK_INT >= 30) {
+                lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+            } else {
+                lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+            }
+            getWindow().setAttributes(lp);
+        }
+
         hideSystemUI();
 
         FrameLayout root = new FrameLayout(this);
@@ -288,10 +304,26 @@ public class MainActivity extends Activity {
                 return true;
             }
 
-            // Кнопка Назад
+            // Кнопка Назад (двойное нажатие для чистого выхода из приложения)
             if (keyCode == KeyEvent.KEYCODE_BACK) {
-                dispatchJsEvent("Escape");
-                return true;
+                if (customView != null) {
+                    if (webView != null && webView.getWebChromeClient() != null) {
+                        webView.getWebChromeClient().onHideCustomView();
+                    }
+                    return true;
+                }
+                long now = System.currentTimeMillis();
+                if (now - backPressedTime < 2000) {
+                    if (backToast != null) backToast.cancel();
+                    finishAffinity();
+                    return true;
+                } else {
+                    backPressedTime = now;
+                    backToast = Toast.makeText(this, "Нажмите «Назад» ещё раз для выхода", Toast.LENGTH_SHORT);
+                    backToast.show();
+                    dispatchJsEvent("Escape");
+                    return true;
+                }
             }
         }
 
@@ -317,8 +349,16 @@ public class MainActivity extends Activity {
             }
             return;
         }
-        dispatchJsEvent("Escape");
-        super.onBackPressed();
+        long now = System.currentTimeMillis();
+        if (now - backPressedTime < 2000) {
+            if (backToast != null) backToast.cancel();
+            finishAffinity();
+        } else {
+            backPressedTime = now;
+            backToast = Toast.makeText(this, "Нажмите «Назад» ещё раз для выхода", Toast.LENGTH_SHORT);
+            backToast.show();
+            dispatchJsEvent("Escape");
+        }
     }
 
     @Override
