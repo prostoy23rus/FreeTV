@@ -39,6 +39,7 @@
             <div class="brand-title">Free<span class="brand-title-accent">TV</span></div>
             <span class="brand-badge">PRO</span>
           </div>
+          <button id="settingsBtn" class="settings-gear-btn" title="Настройки и информация">⚙️</button>
           <button id="collapseSidebarBtn" class="icon-toggle-btn" title="Свернуть список (Ctrl+B)">◀</button>
         </div>
         <div class="search-box">
@@ -66,12 +67,6 @@
       <div class="channel-list-container" id="channelListContainer">
         <div class="list-status" id="listStatus">Загрузка плейлиста...</div>
         <div class="channel-list" id="channelList"></div>
-      </div>
-
-      <div class="sidebar-footer">
-        <button id="refreshBtn" class="action-btn" title="Обновить плейлист">🔄 Обновить</button>
-        <button id="settingsBtn" class="action-btn" title="Настройки источника">⚙️ Источник</button>
-        <span id="channelCountBadge" class="channel-count">0 кан.</span>
       </div>
     </aside>
 
@@ -137,20 +132,62 @@
     </main>
   </div>
 
-  <!-- Модальное окно настроек источника плейлиста -->
+  <!-- Модальное окно настроек, управления источником и информации -->
   <div class="modal" id="settingsModal" style="display: none;">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Источник плейлиста</h3>
-        <button class="close-modal-btn" id="closeSettingsBtn">&times;</button>
+        <div class="modal-title-wrap">
+          <span class="modal-icon">⚙️</span>
+          <h3>Настройки и инфо</h3>
+        </div>
+        <button class="close-modal-btn" id="closeSettingsBtn" title="Закрыть">&times;</button>
       </div>
+
       <div class="modal-body">
-        <label for="playlistUrlInput">URL плейлиста (M3U / M3U8):</label>
-        <input type="text" id="playlistUrlInput" class="text-input" value="freetv_playlist.m3u">
-      </div>
-      <div class="modal-footer">
-        <button id="resetPlaylistBtn" class="btn secondary-btn">По умолчанию</button>
-        <button id="savePlaylistBtn" class="btn primary-btn">Сохранить и загрузить</button>
+        <!-- Блок счетчика каналов -->
+        <div class="settings-group">
+          <div class="settings-group-title">📊 Каталог каналов</div>
+          <div class="settings-stats-row">
+            <div class="settings-stat-item">
+              <span class="stat-number" id="settingsTotalChannels">0</span>
+              <span class="stat-text">Всего каналов</span>
+            </div>
+            <div class="settings-stat-item">
+              <span class="stat-number" id="settingsVisibleChannels">0</span>
+              <span class="stat-text">В текущем списке</span>
+            </div>
+            <div class="settings-stat-item">
+              <span class="stat-number" id="settingsFavCount">0</span>
+              <span class="stat-text">В избранном</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Блок принудительного обновления плейлиста и EPG -->
+        <div class="settings-group">
+          <div class="settings-group-title">🔄 Обновление данных</div>
+          <button id="refreshBtn" class="refresh-full-btn">
+            <span class="refresh-icon">🔄</span> Обновить плейлист и телепрограмму (EPG)
+          </button>
+        </div>
+
+        <!-- Блок пользовательского источника плейлиста -->
+        <div class="settings-group">
+          <div class="settings-group-title">🌐 Пользовательский источник</div>
+          <label for="playlistUrlInput" class="input-label">URL или имя плейлиста (M3U / M3U8):</label>
+          <input type="text" id="playlistUrlInput" class="text-input" value="freetv_playlist.m3u">
+          <div class="settings-actions-row">
+            <button id="resetPlaylistBtn" class="btn secondary-btn">По умолчанию</button>
+            <button id="savePlaylistBtn" class="btn primary-btn">Сохранить и загрузить</button>
+          </div>
+        </div>
+
+        <!-- Информация о версии -->
+        <div class="settings-footer-info">
+          <span>FreeTV Player <strong>v1.0.0</strong></span>
+          <span class="dot-separator">•</span>
+          <span>Открытый исходный код</span>
+        </div>
       </div>
     </div>
   </div>

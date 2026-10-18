@@ -81,6 +81,10 @@ class FreeTVApp {
     this.savePlaylistBtn = document.getElementById('savePlaylistBtn');
     this.resetPlaylistBtn = document.getElementById('resetPlaylistBtn');
 
+    this.settingsTotalChannels = document.getElementById('settingsTotalChannels');
+    this.settingsVisibleChannels = document.getElementById('settingsVisibleChannels');
+    this.settingsFavCount = document.getElementById('settingsFavCount');
+
     this.epgBadge = document.getElementById('epgBadge');
     this.epgTitle = document.getElementById('epgTitle');
     this.epgTimeRange = document.getElementById('epgTimeRange');
@@ -350,32 +354,44 @@ class FreeTVApp {
     });
 
     // Settings Modal
-    this.settingsBtn.addEventListener('click', () => {
-      this.playlistUrlInput.value = this.playlistUrl;
-      this.settingsModal.style.display = 'flex';
-    });
+    if (this.settingsBtn) {
+      this.settingsBtn.addEventListener('click', () => {
+        this.openSettingsModal();
+      });
+    }
 
-    this.closeSettingsBtn.addEventListener('click', () => {
-      this.settingsModal.style.display = 'none';
-    });
-
-    this.resetPlaylistBtn.addEventListener('click', () => {
-      this.playlistUrlInput.value = DEFAULT_PLAYLIST_URL;
-    });
-
-    this.savePlaylistBtn.addEventListener('click', () => {
-      const url = this.playlistUrlInput.value.trim();
-      if (url) {
-        this.playlistUrl = url;
-        localStorage.setItem('freetv_playlist_url', url);
+    if (this.closeSettingsBtn) {
+      this.closeSettingsBtn.addEventListener('click', () => {
         this.settingsModal.style.display = 'none';
-        this.loadPlaylist();
-      }
-    });
+      });
+    }
 
-    this.refreshBtn.addEventListener('click', () => {
-      this.loadPlaylist();
-    });
+    if (this.resetPlaylistBtn) {
+      this.resetPlaylistBtn.addEventListener('click', () => {
+        this.playlistUrlInput.value = DEFAULT_PLAYLIST_URL;
+      });
+    }
+
+    if (this.savePlaylistBtn) {
+      this.savePlaylistBtn.addEventListener('click', () => {
+        const url = this.playlistUrlInput.value.trim();
+        if (url) {
+          this.playlistUrl = url;
+          localStorage.setItem('freetv_playlist_url', url);
+          this.settingsModal.style.display = 'none';
+          this.showQuickOsd('Загрузка нового источника...');
+          this.loadPlaylist();
+        }
+      });
+    }
+
+    if (this.refreshBtn) {
+      this.refreshBtn.addEventListener('click', () => {
+        this.settingsModal.style.display = 'none';
+        this.showQuickOsd('🔄 Обновление плейлиста и телепрограммы...');
+        this.loadPlaylist();
+      });
+    }
 
     // Навигация с пульта Android TV и клавиатуры
     this.dialBuffer = '';
@@ -478,6 +494,9 @@ class FreeTVApp {
       }
 
       this.channels = this.parseM3U(content);
+      if (this.settingsTotalChannels) {
+        this.settingsTotalChannels.textContent = this.channels.length;
+      }
       this.extractCategories();
       this.populateCategoryDropdown();
       this.updateFavCount();
@@ -615,7 +634,8 @@ class FreeTVApp {
     }
 
     this.filteredChannels = list;
-    this.channelCountBadge.textContent = `${list.length} кан.`;
+    if (this.channelCountBadge) this.channelCountBadge.textContent = `${list.length} кан.`;
+    if (this.settingsVisibleChannels) this.settingsVisibleChannels.textContent = list.length;
     this.resetAndRenderChannels();
   }
 
@@ -1104,7 +1124,16 @@ class FreeTVApp {
   }
 
   updateFavCount() {
-    this.favCountSpan.textContent = this.favorites.size;
+    if (this.favCountSpan) this.favCountSpan.textContent = this.favorites.size;
+    if (this.settingsFavCount) this.settingsFavCount.textContent = this.favorites.size;
+  }
+
+  openSettingsModal() {
+    if (this.playlistUrlInput) this.playlistUrlInput.value = this.playlistUrl;
+    if (this.settingsTotalChannels) this.settingsTotalChannels.textContent = this.channels.length;
+    if (this.settingsVisibleChannels) this.settingsVisibleChannels.textContent = this.filteredChannels.length;
+    if (this.settingsFavCount) this.settingsFavCount.textContent = this.favorites.size;
+    if (this.settingsModal) this.settingsModal.style.display = 'flex';
   }
 
   // История
