@@ -55,29 +55,30 @@ body {
 .brand-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
+  justify-content: center;
+  margin-bottom: 8px;
+  position: relative;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 8px;
 }
 
 .brand-logo-wrap {
-  width: 32px;
-  height: 32px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: drop-shadow(0 2px 10px rgba(56, 189, 248, 0.4));
+  filter: drop-shadow(0 2px 6px rgba(56, 189, 248, 0.4));
   flex-shrink: 0;
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .brand-logo-wrap:hover {
-  transform: scale(1.08);
+  transform: scale(1.05);
 }
 
 .brand-svg-logo {
@@ -87,7 +88,7 @@ body {
 }
 
 .brand-title {
-  font-size: 20px;
+  font-size: 15px;
   font-weight: 800;
   color: #f8fafc;
   letter-spacing: 0.5px;
@@ -103,25 +104,18 @@ body {
 }
 
 .brand-badge {
-  font-size: 10px;
+  font-size: 8px;
   background: linear-gradient(135deg, #0284c7, #2563eb);
   color: white;
-  padding: 2px 7px;
-  border-radius: 6px;
+  padding: 1px 5px;
+  border-radius: 4px;
   font-weight: 700;
-  letter-spacing: 0.8px;
-  box-shadow: 0 0 12px rgba(2, 132, 199, 0.45);
+  letter-spacing: 0.6px;
+  box-shadow: 0 0 8px rgba(2, 132, 199, 0.4);
 }
 
 .icon-toggle-btn {
-  background: #1e293b;
-  border: 1px solid #334155;
-  color: #94a3b8;
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.15s;
+  display: none !important;
 }
 
 .icon-toggle-btn:hover {
@@ -178,20 +172,21 @@ body {
 /* Вкладки (Все, Избранное, История) */
 .filter-tabs {
   display: flex;
-  padding: 8px 14px;
-  gap: 8px;
+  padding: 6px 12px;
+  gap: 6px;
   background: #0d1526;
   border-bottom: 1px solid #1a2742;
+  justify-content: center;
 }
 
 .filter-tab {
   flex: 1;
-  padding: 8px 6px;
+  padding: 5px 8px;
   background: #172339;
   border: 1px solid #283958;
-  border-radius: 7px;
+  border-radius: 16px;
   color: #94a3b8;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -966,36 +961,98 @@ body.is-tv .epg-desc {
 }
 
 /* ========================================================
-   📱 ОПТИМИЗАЦИЯ ДЛЯ СМАРТФОНОВ (MOBILE / TABLET)
-/* ========================================================
-   📱 СОВРЕМЕННЫЙ АДАПТИВНЫЙ ИНТЕРФЕЙС (MOBILE & ANDROID TV)
+   📱 ОПТИМИЗАЦИЯ ДЛЯ СМАРТФОНОВ (ЧИСТЫЙ ВИДЕОПОТОК В ГОРИЗОНТАЛИ)
    ======================================================== */
 
-/* Портретный режим на смартфонах и планшетах */
-@media (max-width: 768px), (orientation: portrait) {
+/* ГОРИЗОНТАЛЬНЫЙ РЕЖИМ (LANDSCAPE) — ТОЛЬКО ВИДЕОПОТОК, НИКАКОГО ИНТЕРФЕЙСА */
+@media (orientation: landscape) {
+  html, body {
+    width: 100vw !important;
+    height: 100vh !important;
+    overflow: hidden !important;
+    background: #000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .app-container {
+    width: 100vw !important;
+    height: 100vh !important;
+    overflow: hidden !important;
+    background: #000 !important;
+    position: relative !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Полностью скрываем весь интерфейс при горизонтальном положении */
+  .sidebar,
+  .player-header,
+  .epg-bar,
+  .expand-sidebar-btn,
+  .shortcuts-hint,
+  .sidebar-footer {
+    display: none !important;
+  }
+
+  /* Видео разворачивается строго на весь экран */
+  .player-area {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 99999 !important;
+    background: #000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  .video-container {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    position: relative !important;
+    background: #000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  #videoPlayer {
+    width: 100vw !important;
+    height: 100vh !important;
+    object-fit: contain !important;
+    background: #000 !important;
+  }
+}
+
+/* ВЕРТИКАЛЬНЫЙ РЕЖИМ (PORTRAIT) НА СМАРТФОНАХ */
+@media (orientation: portrait) {
   .app-container {
     flex-direction: column;
     height: 100vh;
     overflow: hidden;
   }
 
-  /* Видеоплеер закреплен строго сверху (16:9, без полей) */
+  /* Видеоплеер строго сверху (16:9) */
   .player-area {
     order: 1;
     width: 100vw;
     height: auto;
     flex: 0 0 auto;
-    position: relative;
     background: #000;
-    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
   }
 
   .video-container {
     width: 100vw;
-    height: 56.25vw; /* Пропорция 16:9 под ширину телефона */
+    height: 56.25vw; /* Пропорция 16:9 под ширину экрана телефона */
     max-height: 40vh;
-    position: relative;
     background: #000;
+    position: relative;
   }
 
   #videoPlayer {
@@ -1004,127 +1061,71 @@ body.is-tv .epg-desc {
     object-fit: contain;
   }
 
-  /* Плавающая верхняя плашка поверх видео */
+  /* Компактная инфо-панель сразу под видео */
   .player-header {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
     height: auto;
-    padding: 8px 12px;
-    background: linear-gradient(180deg, rgba(7, 13, 24, 0.94) 0%, rgba(7, 13, 24, 0) 100%);
-    border-bottom: none;
-    z-index: 30;
+    min-height: auto;
+    padding: 6px 12px;
+    background: #0d1526;
+    border-bottom: 1px solid #1a2742;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    transition: opacity 0.3s ease, transform 0.3s ease;
-  }
-
-  .player-header.controls-hidden {
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(-8px);
   }
 
   .current-channel-info {
-    max-width: 65%;
+    max-width: 100%;
+    gap: 8px;
   }
 
   .current-text h2 {
     font-size: 14px;
     font-weight: 700;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
   }
 
   .current-meta {
-    gap: 4px;
+    gap: 5px;
     margin-top: 2px;
   }
 
   .current-meta .badge,
-  .current-meta .status-indicator {
-    font-size: 9px;
-    padding: 1px 5px;
-  }
-
+  .current-meta .status-indicator,
   .channel-number-badge {
-    font-size: 9px;
-    padding: 1px 5px;
+    font-size: 10px;
+    padding: 2px 6px;
   }
 
-  .header-controls {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-  }
-
-  .fav-action-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 15px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .header-controls .action-control-btn {
-    padding: 4px 8px;
-    font-size: 11px;
-    height: 32px;
-    border-radius: 8px;
-  }
-
-  /* Плавающий EPG бар поверх видео снизу */
+  /* EPG под видео */
   .epg-bar {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    padding: 6px 12px;
-    background: linear-gradient(0deg, rgba(7, 13, 24, 0.94) 0%, rgba(7, 13, 24, 0) 100%);
-    border-top: none;
+    padding: 5px 12px;
+    background: #0a1120;
+    border-bottom: 1px solid #1a2742;
     min-height: auto;
-    z-index: 30;
-    pointer-events: none;
-    transition: opacity 0.3s ease, transform 0.3s ease;
-  }
-
-  .epg-bar.controls-hidden {
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(8px);
   }
 
   .epg-now {
     max-width: 100%;
-    gap: 6px;
+    gap: 8px;
   }
 
   .epg-title {
     font-size: 12px;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
   }
 
   .shortcuts-hint {
     display: none !important;
   }
 
-  /* Список каналов занимает всё нижнее пространство */
+  /* Список каналов занимает нижнюю часть экрана */
   .sidebar {
     order: 2;
     width: 100% !important;
     min-width: 100% !important;
     max-width: 100% !important;
     flex: 1 1 auto;
-    height: calc(100vh - 56.25vw);
+    height: calc(100vh - 56.25vw - 75px);
     border-right: none;
-    border-top: 1px solid #1a2742;
+    border-top: none;
     box-shadow: none;
     display: flex;
     flex-direction: column;
@@ -1136,40 +1137,24 @@ body.is-tv .epg-desc {
   }
 
   .sidebar-header {
-    padding: 8px 12px 6px;
-  }
-
-  .brand-row {
-    margin-bottom: 6px;
-  }
-
-  .brand-title {
-    font-size: 16px;
-  }
-
-  .brand-badge {
-    font-size: 9px;
-    padding: 1px 5px;
-  }
-
-  .icon-toggle-btn {
-    display: none; /* На телефоне не скрываем список, он и так под видео */
+    padding: 6px 12px 4px;
   }
 
   .search-box input {
-    padding: 7px 30px 7px 28px;
-    font-size: 13px;
+    padding: 6px 30px 6px 28px;
+    font-size: 12px;
   }
 
+  /* Маленькие кнопки "Все", "Избранное", "История" */
   .filter-tabs {
     padding: 4px 10px;
     gap: 5px;
   }
 
   .filter-tab {
-    padding: 6px 10px;
+    padding: 5px 8px;
     font-size: 11px;
-    border-radius: 16px;
+    border-radius: 14px;
   }
 
   .category-select-wrapper {
@@ -1177,7 +1162,7 @@ body.is-tv .epg-desc {
   }
 
   .category-dropdown {
-    padding: 7px 10px;
+    padding: 6px 10px;
     font-size: 12px;
   }
 
@@ -1188,8 +1173,8 @@ body.is-tv .epg-desc {
   }
 
   .channel-item {
-    padding: 10px 12px;
-    min-height: 52px;
+    padding: 9px 12px;
+    min-height: 50px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   }
 
@@ -1199,91 +1184,8 @@ body.is-tv .epg-desc {
   }
 
   .channel-thumb-box {
-    width: 36px;
-    height: 36px;
-  }
-}
-
-/* Ландшафтный режим на смартфонах, планшетах и Android TV */
-@media (orientation: landscape) and (max-height: 600px), (orientation: landscape) and (max-width: 1024px) {
-  .app-container {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-  }
-
-  /* Видео занимает 100% экрана */
-  .player-area {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 1;
-  }
-
-  .video-container {
-    width: 100vw;
-    height: 100vh;
-    max-height: 100vh;
-  }
-
-  /* Боковая панель каналов — это полупрозрачная выезжающая шторка */
-  .sidebar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 360px !important;
-    min-width: 320px !important;
-    background: rgba(7, 13, 24, 0.94);
-    backdrop-filter: blur(20px);
-    z-index: 100;
-    border-right: 1px solid rgba(56, 189, 248, 0.25);
-    box-shadow: 12px 0 35px rgba(0, 0, 0, 0.7);
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .sidebar.collapsed {
-    transform: translateX(-100%) !important;
-    width: 360px !important;
-    min-width: 320px !important;
-    opacity: 1 !important;
-    pointer-events: none !important;
-    display: flex !important;
-  }
-
-  .player-header {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 25;
-    background: linear-gradient(180deg, rgba(7, 13, 24, 0.92) 0%, rgba(7, 13, 24, 0) 100%);
-    border-bottom: none;
-    transition: opacity 0.3s ease;
-  }
-
-  .epg-bar {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    z-index: 25;
-    background: linear-gradient(0deg, rgba(7, 13, 24, 0.92) 0%, rgba(7, 13, 24, 0) 100%);
-    border-top: none;
-    transition: opacity 0.3s ease;
-  }
-
-  .player-header.controls-hidden,
-  .epg-bar.controls-hidden {
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .shortcuts-hint {
-    display: none;
+    width: 34px;
+    height: 34px;
   }
 }
 

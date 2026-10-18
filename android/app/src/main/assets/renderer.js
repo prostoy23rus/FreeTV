@@ -212,40 +212,46 @@ class FreeTVApp {
       this.applyFilters();
     });
 
-    // Избранное у текущего канала
-    this.toggleFavBtn.addEventListener('click', () => {
-      if (!this.currentChannel) return;
-      this.toggleFavorite(this.currentChannel);
-      this.updateFavButtonState();
-      this.updateFavCount();
-      if (this.activeTab === 'fav') {
-        this.applyFilters();
-      } else {
-        this.updateActiveItemVisuals();
-      }
-    });
+    // Избранное у текущего канала (если кнопка есть)
+    if (this.toggleFavBtn) {
+      this.toggleFavBtn.addEventListener('click', () => {
+        if (!this.currentChannel) return;
+        this.toggleFavorite(this.currentChannel);
+        this.updateFavButtonState();
+        this.updateFavCount();
+        if (this.activeTab === 'fav') {
+          this.applyFilters();
+        } else {
+          this.updateActiveItemVisuals();
+        }
+      });
+    }
 
     // PiP
-    this.pipBtn.addEventListener('click', async () => {
-      try {
-        if (document.pictureInPictureElement) {
-          await document.exitPictureInPicture();
-        } else if (document.pictureInPictureEnabled && this.video) {
-          await this.video.requestPictureInPicture();
+    if (this.pipBtn) {
+      this.pipBtn.addEventListener('click', async () => {
+        try {
+          if (document.pictureInPictureElement) {
+            await document.exitPictureInPicture();
+          } else if (document.pictureInPictureEnabled && this.video) {
+            await this.video.requestPictureInPicture();
+          }
+        } catch (e) {
+          console.error('PiP error:', e);
         }
-      } catch (e) {
-        console.error('PiP error:', e);
-      }
-    });
+      });
+    }
 
     // Fullscreen
-    this.fullscreenBtn.addEventListener('click', () => {
-      if (!document.fullscreenElement) {
-        this.videoContainer.requestFullscreen().catch(err => console.error(err));
-      } else {
-        document.exitFullscreen();
-      }
-    });
+    if (this.fullscreenBtn) {
+      this.fullscreenBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          this.videoContainer.requestFullscreen().catch(err => console.error(err));
+        } else {
+          document.exitFullscreen();
+        }
+      });
+    }
 
     // Плавное скрытие и показ плавающих оверлеев при тапе/движении мыши
     let controlsTimer = null;
@@ -300,7 +306,11 @@ class FreeTVApp {
 
     // Двойной клик по видео — полноэкранный режим
     this.video.addEventListener('dblclick', () => {
-      this.fullscreenBtn.click();
+      if (!document.fullscreenElement) {
+        this.videoContainer.requestFullscreen().catch(err => console.error(err));
+      } else {
+        document.exitFullscreen();
+      }
     });
 
     // Бесконечный скролл (Infinite Scroll) списка каналов
@@ -368,7 +378,11 @@ class FreeTVApp {
           document.activeElement.click();
         }
       } else if (e.key === 'f' || e.key === 'F') {
-        this.fullscreenBtn.click();
+        if (!document.fullscreenElement) {
+          this.videoContainer.requestFullscreen().catch(err => console.error(err));
+        } else {
+          document.exitFullscreen();
+        }
       } else if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'MediaPlayPause') {
         e.preventDefault();
         if (this.video.paused) this.video.play();
