@@ -434,6 +434,16 @@ class FreeTVApp {
       });
     }
 
+    document.addEventListener('focusin', () => {
+      this.updateBackState();
+    });
+
+    if (this.channelListContainer) {
+      this.channelListContainer.addEventListener('scroll', () => {
+        this.updateBackState();
+      }, { passive: true });
+    }
+
     // Навигация с пульта Android TV и клавиатуры
     this.dialBuffer = '';
     this.dialTimer = null;
@@ -1549,23 +1559,72 @@ class FreeTVApp {
     if (key === 'Escape' || key === 'Back' || key === 'GoBack') {
       if (this.categoryModal && this.categoryModal.style.display !== 'none') {
         this.closeCategoryModal();
+        this.updateBackState();
         return true;
       }
       if (this.settingsModal && this.settingsModal.style.display !== 'none') {
         this.settingsModal.style.display = 'none';
+        this.updateBackState();
         return true;
       }
       // Если был выполнен поиск — сбрасываем его и возвращаем полный список каналов
       if (this.searchInput && this.searchInput.value) {
         this.clearSearch();
         this.focusCurrentOrFirstChannel();
+        this.updateBackState();
         return true;
       }
-      this.focusCurrentOrFirstChannel();
+
+      // Если пользователь находится в списке каналов (на канале, звездочке) или пролистал вниз
+      // нажатие «Назад» мгновенно возвращает фокус на выбор категорий!
+      const isChannel = activeEl && activeEl.classList.contains('channel-item');
+      const isChannelFav = activeEl && activeEl.classList.contains('channel-fav-btn');
+      const isScrolled = this.channelListContainer && this.channelListContainer.scrollTop > 10;
+
+      if (isChannel || isChannelFav || isScrolled) {
+        if (this.channelListContainer) {
+          this.channelListContainer.scrollTop = 0;
+        }
+        if (this.categorySelectBtn) {
+          this.categorySelectBtn.focus();
+          this.categorySelectBtn.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        } else if (this.categorySelect) {
+          this.categorySelect.focus();
+        }
+        this.updateBackState();
+        return true;
+      }
+
+      this.updateBackState();
       return true;
     }
 
     return false;
+  }
+
+  updateBackState() {
+    let active = false;
+    if (document.body.classList.contains('tv-fullscreen')) {
+      active = true;
+    } else if (this.categoryModal && this.categoryModal.style.display !== 'none') {
+      active = true;
+    } else if (this.settingsModal && this.settingsModal.style.display !== 'none') {
+      active = true;
+    } else if (this.searchInput && this.searchInput.value) {
+      active = true;
+    } else {
+      const activeEl = document.activeElement;
+      const isChannel = activeEl && activeEl.classList.contains('channel-item');
+      const isChannelFav = activeEl && activeEl.classList.contains('channel-fav-btn');
+      const isScrolled = this.channelListContainer && this.channelListContainer.scrollTop > 10;
+      if (isChannel || isChannelFav || isScrolled) {
+        active = true;
+      }
+    }
+
+    if (window.AndroidBridge && typeof window.AndroidBridge.setBackHandlerActive === 'function') {
+      window.AndroidBridge.setBackHandlerActive(active);
+    }
   }
 
   focusCurrentOrFirstChannel() {
@@ -1574,6 +1633,7 @@ class FreeTVApp {
       active.focus();
       active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
+    this.updateBackState();
   }
 
   navigateChannels(delta) {

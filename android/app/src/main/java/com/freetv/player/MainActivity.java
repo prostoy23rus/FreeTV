@@ -92,6 +92,17 @@ public class MainActivity extends Activity {
             return isFullscreen;
         }
 
+        private volatile boolean backHandlerActive = false;
+
+        @JavascriptInterface
+        public void setBackHandlerActive(boolean active) {
+            this.backHandlerActive = active;
+        }
+
+        public boolean isBackHandlerActive() {
+            return backHandlerActive;
+        }
+
         @JavascriptInterface
         public String getBundledPlaylist() {
             try {
@@ -782,7 +793,13 @@ public class MainActivity extends Activity {
             return true;
         }
 
-        // Отправляем Escape в веб-интерфейс (закрытие модальных окон, возврат)
+        // Если активен внутренний UI-обработчик (модалка категорий, поиск или возврат из списка каналов к категориям)
+        if (webAppInterface != null && webAppInterface.isBackHandlerActive()) {
+            dispatchJsEvent("Escape");
+            return true;
+        }
+
+        // Отправляем Escape в веб-интерфейс
         dispatchJsEvent("Escape");
 
         long now = System.currentTimeMillis();
