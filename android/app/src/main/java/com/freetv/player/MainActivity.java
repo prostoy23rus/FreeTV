@@ -142,7 +142,16 @@ public class MainActivity extends Activity {
         public boolean isAndroidTv() {
             if (getPackageName().endsWith(".tv")) return true;
             UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
-            return uiModeManager != null && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION;
+            if (uiModeManager != null && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+                return true;
+            }
+            android.content.pm.PackageManager pm = getPackageManager();
+            if (pm != null) {
+                if (pm.hasSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK)) return true;
+                if (pm.hasSystemFeature("android.hardware.type.television")) return true;
+                if (!pm.hasSystemFeature(android.content.pm.PackageManager.FEATURE_TOUCHSCREEN)) return true;
+            }
+            return false;
         }
 
         @JavascriptInterface
@@ -597,6 +606,9 @@ public class MainActivity extends Activity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         }
+
+        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
 
         webView.setBackgroundColor(0xFF070D18);
         webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
