@@ -46,6 +46,190 @@ body {
   opacity: 0;
 }
 
+/* ================== СТАРТОВЫЙ СПЛЭШ-ЭКРАН ================== */
+.splash-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(circle at center, #0f1c38 0%, #070d18 70%, #040810 100%);
+  z-index: 9999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: all;
+  user-select: none;
+}
+
+.splash-screen.splash-hidden {
+  opacity: 0;
+  transform: scale(1.05);
+  pointer-events: none;
+}
+
+.splash-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: splashFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.splash-logo-wrap {
+  width: 120px;
+  height: 120px;
+  margin-bottom: 22px;
+  position: relative;
+  filter: drop-shadow(0 12px 30px rgba(56, 189, 248, 0.45));
+}
+
+.splash-svg-logo {
+  width: 100%;
+  height: 100%;
+  animation: splashPulse 2.4s infinite ease-in-out;
+}
+
+.splash-play {
+  animation: splashShimmer 1.8s infinite ease-in-out;
+  transform-origin: 139px 122px;
+}
+
+.splash-led {
+  animation: splashLedBlink 1.2s infinite ease-in-out;
+}
+
+.splash-title {
+  font-size: 38px;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+.splash-title-accent {
+  color: #38bdf8;
+  text-shadow: 0 0 20px rgba(56, 189, 248, 0.6);
+}
+
+.splash-badge {
+  font-size: 13px;
+  font-weight: 800;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #38bdf8, #2563eb);
+  color: #ffffff;
+  border-radius: 6px;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 10px rgba(56, 189, 248, 0.4);
+}
+
+.splash-subtitle {
+  font-size: 15px;
+  font-weight: 500;
+  color: #94a3b8;
+  margin-bottom: 22px;
+  letter-spacing: 0.2px;
+}
+
+.splash-progress-track {
+  width: 220px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.splash-progress-bar {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8, #2563eb, #38bdf8);
+  background-size: 200% 100%;
+  animation: splashTrackAnim 1.6s infinite ease-in-out;
+  border-radius: 4px;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+}
+
+@keyframes splashFadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes splashPulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 10px 24px rgba(56, 189, 248, 0.4));
+  }
+  50% {
+    transform: scale(1.05);
+    filter: drop-shadow(0 16px 36px rgba(56, 189, 248, 0.65));
+  }
+}
+
+@keyframes splashShimmer {
+  0%, 100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes splashLedBlink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes splashTrackAnim {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* На ТВ делаем сплэш чуть крупнее для большого экрана */
+body.is-tv .splash-logo-wrap {
+  width: 160px;
+  height: 160px;
+  margin-bottom: 28px;
+}
+
+body.is-tv .splash-title {
+  font-size: 48px;
+}
+
+body.is-tv .splash-subtitle {
+  font-size: 20px;
+}
+
+body.is-tv .splash-progress-track {
+  width: 300px;
+  height: 5px;
+}
+
 .sidebar-header {
   padding: 14px 16px 12px;
   background-color: #0d1526;

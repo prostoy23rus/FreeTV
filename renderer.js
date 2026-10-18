@@ -28,6 +28,7 @@ class FreeTVApp {
     this.osdTimer = null;
     this.epgTimer = null;
     this.currentEpgData = null;
+    this.splashStartTime = Date.now();
 
     window.freeTV = this;
 
@@ -600,15 +601,31 @@ class FreeTVApp {
         this.playChannel(candidate);
       }
 
-      setTimeout(() => {
-        const first = this.channelList.querySelector('.channel-item');
-        if (first) first.focus();
-      }, 350);
+      this.hideSplashScreen();
     } catch (err) {
       console.error('Ошибка загрузки плейлиста:', err);
       this.listStatus.style.display = 'block';
       this.listStatus.textContent = 'Ошибка загрузки плейлиста: ' + err.message;
+      this.hideSplashScreen();
     }
+  }
+
+  hideSplashScreen() {
+    const splash = document.getElementById('splashScreen');
+    if (!splash || splash.classList.contains('splash-hidden')) return;
+
+    const elapsed = Date.now() - (this.splashStartTime || 0);
+    const minDelay = 1200;
+    const remaining = Math.max(0, minDelay - elapsed);
+
+    setTimeout(() => {
+      splash.classList.add('splash-hidden');
+      setTimeout(() => {
+        splash.style.display = 'none';
+        const active = this.channelList.querySelector('.channel-item.active') || this.channelList.querySelector('.channel-item');
+        if (active) active.focus();
+      }, 550);
+    }, remaining);
   }
 
   parseM3U(data) {

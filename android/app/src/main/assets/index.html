@@ -11,6 +11,43 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- Стартовый сплэш-экран с анимированным логотипом -->
+  <div class="splash-screen" id="splashScreen">
+    <div class="splash-content">
+      <div class="splash-logo-wrap">
+        <svg class="splash-svg-logo" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="splashBgGrad" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#0284c7"/>
+              <stop offset="50%" stop-color="#2563eb"/>
+              <stop offset="100%" stop-color="#1e1b4b"/>
+            </linearGradient>
+            <linearGradient id="splashGlowGrad" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#38bdf8"/>
+              <stop offset="100%" stop-color="#818cf8"/>
+            </linearGradient>
+            <filter id="splashGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="8" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+          </defs>
+          <rect class="splash-bezel" x="16" y="16" width="224" height="224" rx="52" fill="url(#splashBgGrad)"/>
+          <rect x="17" y="17" width="222" height="222" rx="51" stroke="#38bdf8" stroke-opacity="0.4" stroke-width="2"/>
+          <rect x="42" y="60" width="172" height="124" rx="24" fill="#090e1c" stroke="#1e293b" stroke-width="4"/>
+          <path class="splash-antenna" d="M78 38L108 58M178 38L148 58" stroke="url(#splashGlowGrad)" stroke-width="6" stroke-linecap="round"/>
+          <path class="splash-play" d="M112 96L166 122L112 148V96Z" fill="url(#splashGlowGrad)" filter="url(#splashGlow)"/>
+          <circle class="splash-led" cx="186" cy="78" r="4" fill="#38bdf8" filter="url(#splashGlow)"/>
+          <path d="M96 204H160M128 184V204" stroke="url(#splashGlowGrad)" stroke-width="6" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="splash-title">Free<span class="splash-title-accent">TV</span> <span class="splash-badge">PRO</span></div>
+      <div class="splash-subtitle" id="splashStatus">Загрузка плейлиста и каналов...</div>
+      <div class="splash-progress-track">
+        <div class="splash-progress-bar"></div>
+      </div>
+    </div>
+  </div>
+
   <div class="app-container">
     <!-- Боковая панель категорий и каналов -->
     <aside class="sidebar" id="sidebar">
