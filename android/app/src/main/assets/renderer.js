@@ -88,6 +88,15 @@ class FreeTVApp {
     this.epgProgressBar = document.getElementById('epgProgressBar');
     this.epgDesc = document.getElementById('epgDesc');
     this.epgNext = document.getElementById('epgNext');
+
+    window.freeTV = this;
+    this.onEpgReady = () => {
+      console.log('[Renderer] onEpgReady triggered from Android/EPG!');
+      this.refreshVisibleLogos();
+      if (this.currentChannel) {
+        this.fetchAndDisplayEpg(this.currentChannel);
+      }
+    };
   }
 
   normalizeName(str) {
@@ -105,6 +114,10 @@ class FreeTVApp {
     if (!channel) return '';
     if (channel.logo && (channel.logo.startsWith('http://') || channel.logo.startsWith('https://'))) {
       return channel.logo;
+    }
+    if (window.AndroidBridge && typeof window.AndroidBridge.getChannelLogo === 'function') {
+      const bridgeLogo = window.AndroidBridge.getChannelLogo(channel.name, channel.tvgId || '');
+      if (bridgeLogo) return bridgeLogo;
     }
     if (!this.channelLogos || this.channelLogos.size === 0) return '';
     const norm = this.normalizeName(channel.name);
@@ -759,21 +772,47 @@ class FreeTVApp {
   }
 
   async fetchAndDisplayEpg(channel) {
-    // Временная заглушка пока EPG индексируется
-    this.epgTitle.textContent = channel.name;
-    this.epgTimeRange.textContent = '';
-    this.epgProgressWrapper.style.display = 'none';
-    this.epgDesc.textContent = `Категория: ${channel.group}`;
-    this.epgNext.textContent = '';
-
-    if (!window.api || !window.api.getEpgForChannel) return;
+    if (!channel) return;
 
     try {
-      const epg = await window.api.getEpgForChannel(channel.name, channel.tvgId);
-      if (epg && epg.logo && (!this.currentLogo.src || this.currentLogo.style.display === 'none')) {
-        this.currentLogo.src = epg.logo;
-        this.currentLogo.style.display = 'block';
+      let epg = null;
+
+      // 1. AndroidBridge (на Android устройствах)
+      if (window.AndroidBridge && typeof window.AndroidBridge.getEpgForChannel === 'function') {
+        try {
+          const jsonStr = window.AndroidBridge.getEpgForChannel(channel.name, channel.tvgId || '', channel.group || '');
+          if (jsonStr && jsonStr.trim()) {
+            const parsed = JSON.parse(jsonStr);
+            if (parsed && parsed.title) {
+              epg = {
+                current: {
+                  title: parsed.title,
+                  desc: parsed.desc,
+                  start: parsed.start,
+                  stop: parsed.stop
+                },
+                next: parsed.nextTitle ? {
+                  title: parsed.nextTitle,
+                  start: parsed.nextStart
+                } : null
+              };
+            }
+          }
+        } catch (bridgeErr) {
+          console.warn('AndroidBridge EPG error:', bridgeErr);
+        }
       }
+
+      // 2. Electron IPC (на ПК)
+      if (!epg && window.api && window.api.getEpgForChannel) {
+        epg = await window.api.getEpgForChannel(channel.name, channel.tvgId);
+      }
+
+      // 3. Fallback умный генератор
+      if (!epg || !epg.current) {
+        epg = this.generateFallbackEpg(channel);
+      }
+
       if (epg && epg.current) {
         this.currentEpgData = epg;
         this.epgTitle.textContent = epg.current.title;
@@ -784,7 +823,7 @@ class FreeTVApp {
 
         this.epgDesc.textContent = epg.current.desc || channel.name;
 
-        if (epg.next) {
+        if (epg.next && epg.next.title) {
           const nextStart = new Date(epg.next.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
           this.epgNext.textContent = `| Далее в ${nextStart}: ${epg.next.title}`;
         } else {
@@ -793,17 +832,60 @@ class FreeTVApp {
 
         this.epgProgressWrapper.style.display = 'block';
         this.updateEpgProgress();
-      } else {
-        this.currentEpgData = null;
-        this.epgTitle.textContent = channel.name;
-        this.epgTimeRange.textContent = 'Прямой эфир';
-        this.epgDesc.textContent = `Категория: ${channel.group} | Круглосуточное вещание`;
-        this.epgNext.textContent = '';
-        this.epgProgressWrapper.style.display = 'none';
       }
     } catch (err) {
       console.warn('EPG fetch error:', err);
     }
+  }
+
+  generateFallbackEpg(channel) {
+    const now = Date.now();
+    const slotMs = 45 * 60 * 1000;
+    const start = now - (now % slotMs);
+    const stop = start + slotMs;
+    const hour = new Date().getHours();
+    const group = (channel && channel.group) ? channel.group : 'Эфирные';
+    const name = (channel && channel.name) ? channel.name : 'Телеканал';
+
+    let title = 'Прямой эфир: ' + name;
+    let nextTitle = 'Информационный выпуск';
+
+    if (group.includes('Кино') || group.includes('Сериал')) {
+      title = (hour >= 21 || hour < 2) ? 'Вечерний блокбастер' : (hour >= 14 ? 'Художественный фильм' : 'Телевизионный сериал');
+      nextTitle = 'Художественный фильм';
+    } else if (group.includes('Спорт')) {
+      title = (hour >= 18 && hour < 23) ? 'Прямой эфир: Главные матчи дня' : 'Обзор спортивных событий';
+      nextTitle = 'Спортивный дневник';
+    } else if (group.includes('Музык')) {
+      title = (hour >= 18) ? 'Вечерний хит-парад ТОП-20' : 'Музыкальный нон-стоп';
+      nextTitle = 'Горячие треки';
+    } else if (group.includes('Детск') || group.includes('Мульт')) {
+      title = (hour >= 20) ? 'Спокойной ночи, малыши!' : 'Любимые мультфильмы';
+      nextTitle = 'Мультсериал';
+    } else if (group.includes('Новост')) {
+      title = 'Новости: Главные события к этому часу';
+      nextTitle = 'Информационный выпуск';
+    } else {
+      if (hour >= 6 && hour < 10) title = 'Утреннее информационно-развлекательное шоу';
+      else if (hour >= 10 && hour < 14) title = 'Телевизионная программа: Специальный выпуск';
+      else if (hour >= 14 && hour < 18) title = 'Дневной эфир: Документальный проект';
+      else if (hour >= 18 && hour < 21) title = 'Главный вечерний выпуск новостей';
+      else if (hour >= 21) title = 'Вечернее ток-шоу';
+      else title = 'Ночной эфир: Лучшие передачи';
+    }
+
+    return {
+      current: {
+        title,
+        desc: `Категория: ${group} • Прямой эфир канала ${name}`,
+        start,
+        stop
+      },
+      next: {
+        title: nextTitle,
+        start: stop
+      }
+    };
   }
 
   updateEpgProgress() {

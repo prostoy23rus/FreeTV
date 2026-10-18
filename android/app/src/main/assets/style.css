@@ -670,7 +670,9 @@ video {
   align-items: center;
   gap: 12px;
   overflow: hidden;
-  max-width: 72%;
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .epg-label {
