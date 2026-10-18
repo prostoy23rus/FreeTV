@@ -29,6 +29,8 @@ class FreeTVApp {
     this.epgTimer = null;
     this.currentEpgData = null;
 
+    window.freeTV = this;
+
     this.initDOMElements();
     this.bindEvents();
     this.loadLogos();
@@ -409,60 +411,61 @@ class FreeTVApp {
     this.dialTimer = null;
 
     window.addEventListener('keydown', (e) => {
+      // Игнорируем ввод текста в полях ввода, кроме Escape
       if (document.activeElement === this.searchInput || document.activeElement === this.playlistUrlInput) {
+        if (e.key === 'Escape') {
+          document.activeElement.blur();
+          this.focusCurrentOrFirstChannel();
+        }
         return;
       }
 
-      // Переключение каналов стрелками и кнопками пульта ДУ (CH+, CH-, PageUp, PageDown)
-      if (e.key === 'ArrowDown' || e.key === 'ChannelDown' || e.key === 'PageDown') {
+      // Клавиша F для быстрого полноэкранного режима на клавиатуре/ПК
+      if (e.key === 'f' || e.key === 'F') {
         e.preventDefault();
-        this.navigateChannels(1);
-      } else if (e.key === 'ArrowUp' || e.key === 'ChannelUp' || e.key === 'PageUp') {
-        e.preventDefault();
-        this.navigateChannels(-1);
-      } else if (e.key === 'Enter') {
-        if (document.activeElement && document.activeElement.classList.contains('channel-item')) {
-          e.preventDefault();
-          document.activeElement.click();
-        }
-      } else if (e.key === 'f' || e.key === 'F') {
         this.toggleTvFullscreen();
-      } else if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'MediaPlayPause') {
+        return;
+      }
+
+      // Прямой ввод цифр номера канала с пульта ДУ (0-9)
+      if (/^[0-9]$/.test(e.key)) {
+        this.handleTvChannelDial(e.key);
+        return;
+      }
+
+      // Кнопка Menu на пульте
+      if (e.key === 'm' || e.key === 'M' || e.key === 'Menu') {
         e.preventDefault();
-        if (this.video.paused) this.video.play();
-        else this.video.pause();
-      } else if (e.key === 'MediaPlay') {
-        this.video.play();
-      } else if (e.key === 'MediaPause' || e.key === 'MediaStop') {
-        this.video.pause();
-      } else if (e.key === 'Escape' || e.key === 'Back' || e.key === 'GoBack' || e.keyCode === 4 || e.keyCode === 27) {
-        if (this.settingsModal && this.settingsModal.style.display !== 'none') {
-          this.settingsModal.style.display = 'none';
-        } else if (document.body.classList.contains('tv-fullscreen')) {
-          this.toggleTvFullscreen(false);
-        } else if (document.fullscreenElement) {
-          document.exitFullscreen();
-        }
-      } else if (e.key === 'm' || e.key === 'M' || e.key === 'Menu') {
         if (this.settingsModal && this.settingsModal.style.display !== 'none') {
           this.settingsModal.style.display = 'none';
         } else {
           this.openSettingsModal();
         }
-      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) {
+        return;
+      }
+
+      // Медиа кнопки пульта (Play/Pause)
+      if (e.key === 'MediaPlayPause' || (document.body.classList.contains('tv-fullscreen') && e.key === ' ')) {
         e.preventDefault();
-        this.toggleSidebar(this.sidebar.classList.contains('collapsed'));
-      } else if (e.key === 'ArrowLeft' && this.sidebar.classList.contains('collapsed')) {
-        this.toggleSidebar(true);
-        setTimeout(() => {
-          const active = this.channelList.querySelector('.channel-item.active') || this.channelList.querySelector('.channel-item');
-          if (active) active.focus();
-        }, 150);
-      } else if (e.key === 'ArrowRight' && !this.sidebar.classList.contains('collapsed') && window.innerWidth > window.innerHeight) {
-        this.toggleSidebar(false);
-      } else if (/^[0-9]$/.test(e.key)) {
-        // Прямой набор номера канала с пульта ДУ
-        this.handleTvChannelDial(e.key);
+        if (this.video.paused) this.video.play();
+        else this.video.pause();
+        return;
+      }
+      if (e.key === 'MediaPlay') {
+        this.video.play();
+        return;
+      }
+      if (e.key === 'MediaPause' || e.key === 'MediaStop') {
+        this.video.pause();
+        return;
+      }
+
+      // Свободная 2D навигация (D-Pad стрелки, ОК, Назад)
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Escape', 'Back', 'GoBack', 'ChannelUp', 'ChannelDown', 'PageUp', 'PageDown'].includes(e.key)) {
+        const handled = this.handleTvNavigation(e.key);
+        if (handled) {
+          e.preventDefault();
+        }
       }
     });
 
@@ -716,31 +719,6 @@ class FreeTVApp {
           return;
         }
         this.playChannel(channel);
-      });
-
-      // Навигация с пульта ДУ (D-Pad стрелки и выбор)
-      item.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          this.playChannel(channel);
-        } else if (e.key === 'ArrowDown') {
-          const next = item.nextElementSibling;
-          if (next && next.classList.contains('channel-item')) {
-            e.preventDefault();
-            next.focus();
-            next.scrollIntoView({ block: 'nearest' });
-          }
-        } else if (e.key === 'ArrowUp') {
-          const prev = item.previousElementSibling;
-          if (prev && prev.classList.contains('channel-item')) {
-            e.preventDefault();
-            prev.focus();
-            prev.scrollIntoView({ block: 'nearest' });
-          } else {
-            e.preventDefault();
-            this.categorySelect.focus();
-          }
-        }
       });
 
       fragment.appendChild(item);
@@ -1064,7 +1042,7 @@ class FreeTVApp {
   }
 
   toggleTvFullscreen(force) {
-    const isCurrentlyFullscreen = document.body.classList.contains('tv-fullscreen') || !!document.fullscreenElement;
+    const isCurrentlyFullscreen = document.body.classList.contains('tv-fullscreen');
     const shouldBeFullscreen = (force !== undefined) ? force : !isCurrentlyFullscreen;
 
     if (window.AndroidBridge && typeof window.AndroidBridge.setFullscreenState === 'function') {
@@ -1077,25 +1055,253 @@ class FreeTVApp {
         this.fullscreenBtn.querySelector('.btn-text').textContent = 'Свернуть';
         this.fullscreenBtn.querySelector('.btn-icon').textContent = '🗗';
       }
-      if (this.currentChannel) {
-        this.showQuickOsd(`${this.currentChannel.id}. ${this.currentChannel.name}`);
-      }
-      try {
-        if (this.videoContainer.requestFullscreen && !document.fullscreenElement) {
-          this.videoContainer.requestFullscreen().catch(() => {});
-        }
-      } catch (e) {}
+      // При входе в полный экран прячем OSD, чтобы экран был абсолютно чистым
+      if (this.quickOsd) this.quickOsd.style.display = 'none';
+      if (this.videoContainer) this.videoContainer.focus();
     } else {
       document.body.classList.remove('tv-fullscreen');
       if (this.fullscreenBtn) {
         this.fullscreenBtn.querySelector('.btn-text').textContent = 'Во весь экран';
         this.fullscreenBtn.querySelector('.btn-icon').textContent = '⛶';
+        this.fullscreenBtn.focus();
       }
-      try {
-        if (document.fullscreenElement && document.exitFullscreen) {
-          document.exitFullscreen().catch(() => {});
+    }
+  }
+
+  handleTvNavigation(key) {
+    const isFullscreen = document.body.classList.contains('tv-fullscreen');
+
+    // ==========================================
+    // 1. В РЕЖИМЕ ПОЛНОГО ЭКРАНА (tv-fullscreen)
+    // ==========================================
+    if (isFullscreen) {
+      if (key === 'Escape' || key === 'Back' || key === 'GoBack') {
+        this.toggleTvFullscreen(false);
+        return true;
+      }
+      if (key === 'ArrowUp' || key === 'ChannelUp' || key === 'PageUp') {
+        this.navigateChannels(-1);
+        if (this.currentChannel) {
+          this.showQuickOsd(`${this.currentChannel.id}. ${this.currentChannel.name}`);
         }
-      } catch (e) {}
+        return true;
+      }
+      if (key === 'ArrowDown' || key === 'ChannelDown' || key === 'PageDown') {
+        this.navigateChannels(1);
+        if (this.currentChannel) {
+          this.showQuickOsd(`${this.currentChannel.id}. ${this.currentChannel.name}`);
+        }
+        return true;
+      }
+      if (key === 'Enter') {
+        if (this.video.paused) this.video.play();
+        else this.video.pause();
+        return true;
+      }
+      return true; // В полноэкранном режиме поглощаем остальные стрелки
+    }
+
+    // ==========================================
+    // 2. ЕСЛИ ОТКРЫТО МОДАЛЬНОЕ ОКНО НАСТРОЕК
+    // ==========================================
+    if (this.settingsModal && this.settingsModal.style.display !== 'none') {
+      if (key === 'Escape' || key === 'Back' || key === 'GoBack') {
+        this.settingsModal.style.display = 'none';
+        if (this.settingsBtn) this.settingsBtn.focus();
+        return true;
+      }
+      const focusables = Array.from(this.settingsModal.querySelectorAll('button, input, select')).filter(el => el.offsetParent !== null);
+      if (!focusables.length) return false;
+      let idx = focusables.indexOf(document.activeElement);
+      if (key === 'ArrowDown' || key === 'ArrowRight') {
+        idx = (idx + 1) % focusables.length;
+        focusables[idx].focus();
+        return true;
+      }
+      if (key === 'ArrowUp' || key === 'ArrowLeft') {
+        idx = (idx - 1 + focusables.length) % focusables.length;
+        focusables[idx].focus();
+        return true;
+      }
+      if (key === 'Enter') {
+        if (document.activeElement && typeof document.activeElement.click === 'function') {
+          document.activeElement.click();
+        }
+        return true;
+      }
+      return false;
+    }
+
+    // ==========================================
+    // 3. ОСНОВНОЙ ТВ-ИНТЕРФЕЙС (СВОБОДНОЕ 2D ПЕРЕМЕЩЕНИЕ)
+    // ==========================================
+    const activeEl = document.activeElement;
+    const isChannel = activeEl && activeEl.classList.contains('channel-item');
+    const isFilterTab = activeEl && activeEl.classList.contains('filter-tab');
+    const isCategory = activeEl === this.categorySelect;
+    const isSettings = activeEl === this.settingsBtn;
+    const isSearch = activeEl === this.searchInput;
+    const isFullscreenBtn = activeEl === this.fullscreenBtn;
+
+    // Если фокус ни на чем в приложении не стоит — фокусируем текущий или первый канал
+    if (!isChannel && !isFilterTab && !isCategory && !isSettings && !isSearch && !isFullscreenBtn) {
+      this.focusCurrentOrFirstChannel();
+      return true;
+    }
+
+    // --- НАЖАТИЕ ВНИЗ ---
+    if (key === 'ArrowDown') {
+      if (isChannel) {
+        let next = activeEl.nextElementSibling;
+        while (next && !next.classList.contains('channel-item')) {
+          next = next.nextElementSibling;
+        }
+        if (next) {
+          next.focus();
+          next.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          const items = this.channelList.querySelectorAll('.channel-item');
+          const currIdx = Array.from(items).indexOf(next);
+          if (currIdx >= items.length - 8) {
+            this.renderNextBatch();
+          }
+        }
+        return true;
+      }
+      if (isCategory) {
+        this.focusCurrentOrFirstChannel();
+        return true;
+      }
+      if (isFilterTab) {
+        if (this.categorySelect) this.categorySelect.focus();
+        return true;
+      }
+      if (isSettings || isSearch) {
+        const tab = this.sidebar.querySelector('.filter-tab.active') || this.sidebar.querySelector('.filter-tab');
+        if (tab) tab.focus();
+        return true;
+      }
+      if (isFullscreenBtn) {
+        if (this.errorBanner && this.errorBanner.style.display !== 'none' && this.retryBtn) {
+          this.retryBtn.focus();
+        }
+        return true;
+      }
+    }
+
+    // --- НАЖАТИЕ ВВЕРХ ---
+    if (key === 'ArrowUp') {
+      if (isChannel) {
+        let prev = activeEl.previousElementSibling;
+        while (prev && !prev.classList.contains('channel-item')) {
+          prev = prev.previousElementSibling;
+        }
+        if (prev) {
+          prev.focus();
+          prev.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        } else {
+          // Самый верх списка каналов — переходим на селектор категорий
+          if (this.categorySelect) {
+            this.categorySelect.focus();
+          }
+        }
+        return true;
+      }
+      if (isCategory) {
+        const tab = this.sidebar.querySelector('.filter-tab.active') || this.sidebar.querySelector('.filter-tab');
+        if (tab) tab.focus();
+        return true;
+      }
+      if (isFilterTab) {
+        if (this.searchInput) this.searchInput.focus();
+        return true;
+      }
+      if (isSearch) {
+        if (this.settingsBtn) this.settingsBtn.focus();
+        return true;
+      }
+      if (isFullscreenBtn) {
+        if (this.settingsBtn) this.settingsBtn.focus();
+        return true;
+      }
+    }
+
+    // --- НАЖАТИЕ ВПРАВО ---
+    if (key === 'ArrowRight') {
+      if (isChannel || isCategory) {
+        // Переход из списка каналов или категорий на кнопку "Во весь экран"
+        if (this.fullscreenBtn) {
+          this.fullscreenBtn.focus();
+        }
+        return true;
+      }
+      if (isFilterTab) {
+        const tabs = Array.from(this.sidebar.querySelectorAll('.filter-tab'));
+        const idx = tabs.indexOf(activeEl);
+        if (idx >= 0 && idx < tabs.length - 1) {
+          tabs[idx + 1].focus();
+        } else if (this.fullscreenBtn) {
+          this.fullscreenBtn.focus();
+        }
+        return true;
+      }
+      if (isSettings) {
+        if (this.searchInput) this.searchInput.focus();
+        return true;
+      }
+      if (isSearch) {
+        if (this.fullscreenBtn) this.fullscreenBtn.focus();
+        return true;
+      }
+    }
+
+    // --- НАЖАТИЕ ВЛЕВО ---
+    if (key === 'ArrowLeft') {
+      if (isFullscreenBtn) {
+        // Возврат из кнопки "Во весь экран" обратно в список каналов
+        this.focusCurrentOrFirstChannel();
+        return true;
+      }
+      if (isFilterTab) {
+        const tabs = Array.from(this.sidebar.querySelectorAll('.filter-tab'));
+        const idx = tabs.indexOf(activeEl);
+        if (idx > 0) {
+          tabs[idx - 1].focus();
+        }
+        return true;
+      }
+      if (isSearch) {
+        if (this.settingsBtn) this.settingsBtn.focus();
+        return true;
+      }
+    }
+
+    // --- НАЖАТИЕ ОК / ENTER (ВЫБОР ДЕЙСТВИЯ) ---
+    if (key === 'Enter') {
+      if (activeEl && typeof activeEl.click === 'function') {
+        activeEl.click();
+        return true;
+      }
+    }
+
+    // --- НАЖАТИЕ НАЗАД (BACK / ESCAPE) ---
+    if (key === 'Escape' || key === 'Back' || key === 'GoBack') {
+      if (this.settingsModal && this.settingsModal.style.display !== 'none') {
+        this.settingsModal.style.display = 'none';
+        if (this.settingsBtn) this.settingsBtn.focus();
+        return true;
+      }
+      this.focusCurrentOrFirstChannel();
+      return true;
+    }
+
+    return false;
+  }
+
+  focusCurrentOrFirstChannel() {
+    const active = this.channelList.querySelector('.channel-item.active') || this.channelList.querySelector('.channel-item');
+    if (active) {
+      active.focus();
+      active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
   }
 

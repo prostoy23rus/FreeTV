@@ -1262,8 +1262,7 @@ body.tv-fullscreen #videoPlayer {
 
 /* ГОРИЗОНТАЛЬНЫЙ РЕЖИМ (LANDSCAPE) ДЛЯ ТЕЛЕФОНОВ — ТОЛЬКО ВИДЕОПОТОК, НИКАКОГО ИНТЕРФЕЙСА */
 @media (orientation: landscape) {
-  body.is-mobile,
-  body:not(.is-tv):not(.is-desktop) {
+  body.is-mobile {
     width: 100% !important;
     height: 100% !important;
     max-width: 100% !important;
@@ -1274,8 +1273,7 @@ body.tv-fullscreen #videoPlayer {
     padding: 0 !important;
   }
 
-  body.is-mobile .app-container,
-  body:not(.is-tv):not(.is-desktop) .app-container {
+  body.is-mobile .app-container {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
@@ -1295,19 +1293,12 @@ body.tv-fullscreen #videoPlayer {
   body.is-mobile .epg-bar,
   body.is-mobile .expand-sidebar-btn,
   body.is-mobile .shortcuts-hint,
-  body.is-mobile .sidebar-footer,
-  body:not(.is-tv):not(.is-desktop) .sidebar,
-  body:not(.is-tv):not(.is-desktop) .player-header,
-  body:not(.is-tv):not(.is-desktop) .epg-bar,
-  body:not(.is-tv):not(.is-desktop) .expand-sidebar-btn,
-  body:not(.is-tv):not(.is-desktop) .shortcuts-hint,
-  body:not(.is-tv):not(.is-desktop) .sidebar-footer {
+  body.is-mobile .sidebar-footer {
     display: none !important;
   }
 
   /* Видео разворачивается строго на весь экран смартфона */
-  body.is-mobile .player-area,
-  body:not(.is-tv):not(.is-desktop) .player-area {
+  body.is-mobile .player-area {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
@@ -1322,8 +1313,7 @@ body.tv-fullscreen #videoPlayer {
     border: none !important;
   }
 
-  body.is-mobile .video-container,
-  body:not(.is-tv):not(.is-desktop) .video-container {
+  body.is-mobile .video-container {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
@@ -1338,8 +1328,7 @@ body.tv-fullscreen #videoPlayer {
     overflow: hidden !important;
   }
 
-  body.is-mobile #videoPlayer,
-  body:not(.is-tv):not(.is-desktop) #videoPlayer {
+  body.is-mobile #videoPlayer {
     width: 100% !important;
     height: 100% !important;
     object-fit: contain;

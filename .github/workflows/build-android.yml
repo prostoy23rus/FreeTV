@@ -5,6 +5,10 @@ on:
     paths:
       - 'android/**'
       - '.github/workflows/build-android.yml'
+      - 'renderer.js'
+      - 'style.css'
+      - 'index.html'
+      - 'freetv_playlist.m3u'
   workflow_dispatch:
 
 jobs:
@@ -23,6 +27,13 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+
+      - name: Sync web assets to Android assets
+        run: |
+          cp renderer.js android/app/src/main/assets/renderer.js
+          cp style.css android/app/src/main/assets/style.css
+          cp index.html android/app/src/main/assets/index.html
+          cp freetv_playlist.m3u android/app/src/main/assets/freetv_playlist.m3u
 
       - name: Setup Gradle Wrapper and Build APKs
         working-directory: android

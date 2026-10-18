@@ -736,40 +736,84 @@ public class MainActivity extends Activity {
                 return true;
             }
 
+            // DPAD Навигация (Стрелки) и кнопка OK / Ввод на пультах Android TV
+            if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                dispatchJsEvent("ArrowUp");
+                return true;
+            }
+            if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                dispatchJsEvent("ArrowDown");
+                return true;
+            }
+            if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
+                dispatchJsEvent("ArrowLeft");
+                return true;
+            }
+            if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                dispatchJsEvent("ArrowRight");
+                return true;
+            }
+            if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER) {
+                dispatchJsEvent("Enter");
+                return true;
+            }
+
             // Кнопка Назад (выход из полноэкранного режима или двойное нажатие для выхода)
             if (keyCode == KeyEvent.KEYCODE_BACK) {
-                if (customView != null) {
-                    if (webView != null && webView.getWebChromeClient() != null) {
-                        webView.getWebChromeClient().onHideCustomView();
-                    }
-                    return true;
-                }
-                if (webAppInterface != null && webAppInterface.isFullscreen()) {
-                    dispatchJsEvent("Escape");
-                    return true;
-                }
-                long now = System.currentTimeMillis();
-                if (now - backPressedTime < 2000) {
-                    if (backToast != null) backToast.cancel();
-                    finishAffinity();
-                    return true;
-                } else {
-                    backPressedTime = now;
-                    backToast = Toast.makeText(this, "Нажмите «Назад» ещё раз для выхода", Toast.LENGTH_SHORT);
-                    backToast.show();
-                    dispatchJsEvent("Escape");
-                    return true;
-                }
+                return handleBackAction();
             }
         }
 
-        // DPAD_UP, DPAD_DOWN, DPAD_LEFT, DPAD_RIGHT, DPAD_CENTER передаются в WebView для стандартного перемещения фокуса!
         return super.dispatchKeyEvent(event);
+    }
+
+    private boolean handleBackAction() {
+        if (customView != null) {
+            if (webView != null && webView.getWebChromeClient() != null) {
+                webView.getWebChromeClient().onHideCustomView();
+            }
+            return true;
+        }
+
+        // Если активен полноэкранный режим на ТВ — мгновенный возврат в интерфейс без выхода
+        if (webAppInterface != null && webAppInterface.isFullscreen()) {
+            webAppInterface.setFullscreenState(false);
+            dispatchJsEvent("Escape");
+            return true;
+        }
+
+        // Отправляем Escape в веб-интерфейс (закрытие модальных окон, возврат)
+        dispatchJsEvent("Escape");
+
+        long now = System.currentTimeMillis();
+        if (now - backPressedTime < 2000) {
+            if (backToast != null) backToast.cancel();
+            finishAffinity();
+            return true;
+        } else {
+            backPressedTime = now;
+            backToast = Toast.makeText(this, "Нажмите «Назад» ещё раз для выхода", Toast.LENGTH_SHORT);
+            backToast.show();
+            return true;
+        }
     }
 
     private void dispatchJsEvent(String keyName) {
         if (webView == null) return;
-        String js = "window.dispatchEvent(new KeyboardEvent('keydown', { key: '" + keyName + "', bubbles: true }));";
+        int code = 0;
+        if ("ArrowUp".equals(keyName)) code = 38;
+        else if ("ArrowDown".equals(keyName)) code = 40;
+        else if ("ArrowLeft".equals(keyName)) code = 37;
+        else if ("ArrowRight".equals(keyName)) code = 39;
+        else if ("Enter".equals(keyName)) code = 13;
+        else if ("Escape".equals(keyName)) code = 27;
+        else if (" ".equals(keyName)) code = 32;
+
+        String js = "(function(){" +
+            "var ev = new KeyboardEvent('keydown', { key: '" + keyName + "', code: '" + keyName + "', keyCode: " + code + ", which: " + code + ", bubbles: true, cancelable: true });" +
+            "window.dispatchEvent(ev);" +
+            "})();";
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             webView.evaluateJavascript(js, null);
         } else {
@@ -779,26 +823,7 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        if (customView != null) {
-            if (webView != null && webView.getWebChromeClient() != null) {
-                webView.getWebChromeClient().onHideCustomView();
-            }
-            return;
-        }
-        if (webAppInterface != null && webAppInterface.isFullscreen()) {
-            dispatchJsEvent("Escape");
-            return;
-        }
-        long now = System.currentTimeMillis();
-        if (now - backPressedTime < 2000) {
-            if (backToast != null) backToast.cancel();
-            finishAffinity();
-        } else {
-            backPressedTime = now;
-            backToast = Toast.makeText(this, "Нажмите «Назад» ещё раз для выхода", Toast.LENGTH_SHORT);
-            backToast.show();
-            dispatchJsEvent("Escape");
-        }
+        handleBackAction();
     }
 
     @Override
