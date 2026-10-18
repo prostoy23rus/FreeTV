@@ -226,6 +226,12 @@ class FreeTVApp {
       this.applyFilters();
     });
 
+    this.searchInput.addEventListener('click', () => {
+      if (document.body.classList.contains('is-tv') && window.AndroidBridge && typeof window.AndroidBridge.openSearchDialog === 'function') {
+        window.AndroidBridge.openSearchDialog(this.searchInput.value || '');
+      }
+    });
+
     this.clearSearchBtn.addEventListener('click', () => {
       this.clearSearch();
     });
@@ -460,8 +466,12 @@ class FreeTVApp {
         }
         if (e.key === 'Enter') {
           e.preventDefault();
-          document.activeElement.blur();
-          this.focusCurrentOrFirstChannel();
+          if (document.body.classList.contains('is-tv') && window.AndroidBridge && typeof window.AndroidBridge.openSearchDialog === 'function') {
+            window.AndroidBridge.openSearchDialog(this.searchInput.value || '');
+          } else {
+            document.activeElement.blur();
+            this.focusCurrentOrFirstChannel();
+          }
           return;
         }
         if (e.key === 'ArrowDown') {
@@ -769,6 +779,16 @@ class FreeTVApp {
       });
       this.categoryModalList.appendChild(item);
     });
+  }
+
+  setSearchQuery(query) {
+    if (!this.searchInput) return;
+    this.searchInput.value = query || '';
+    if (this.clearSearchBtn) {
+      this.clearSearchBtn.style.display = this.searchInput.value ? 'block' : 'none';
+    }
+    this.applyFilters();
+    this.focusCurrentOrFirstChannel();
   }
 
   clearSearch(apply = true) {
@@ -1549,6 +1569,12 @@ class FreeTVApp {
 
     // --- НАЖАТИЕ ОК / ENTER (ВЫБОР ДЕЙСТВИЯ) ---
     if (key === 'Enter') {
+      if (isSearch) {
+        if (document.body.classList.contains('is-tv') && window.AndroidBridge && typeof window.AndroidBridge.openSearchDialog === 'function') {
+          window.AndroidBridge.openSearchDialog(this.searchInput.value || '');
+          return true;
+        }
+      }
       if (activeEl && typeof activeEl.click === 'function') {
         activeEl.click();
         return true;

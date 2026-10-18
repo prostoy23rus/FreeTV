@@ -23,6 +23,11 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.Toast;
+import android.widget.EditText;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.text.InputType;
+import android.view.ViewGroup;
 import android.util.Xml;
 
 import org.json.JSONObject;
@@ -101,6 +106,70 @@ public class MainActivity extends Activity {
 
         public boolean isBackHandlerActive() {
             return backHandlerActive;
+        }
+
+        @JavascriptInterface
+        public void openSearchDialog(final String initialQuery) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, android.R.style.Theme_DeviceDefault_Dialog_Alert);
+                        builder.setTitle("Поиск каналов");
+
+                        final EditText input = new EditText(MainActivity.this);
+                        input.setInputType(InputType.TYPE_CLASS_TEXT);
+                        input.setTextColor(0xFFFFFFFF);
+                        input.setText(initialQuery != null ? initialQuery : "");
+                        input.setHint("Введите название канала...");
+                        input.setHintTextColor(0xFF888888);
+                        if (initialQuery != null && !initialQuery.isEmpty()) {
+                            input.setSelection(initialQuery.length());
+                        }
+
+                        FrameLayout container = new FrameLayout(MainActivity.this);
+                        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                        params.leftMargin = 40;
+                        params.rightMargin = 40;
+                        params.topMargin = 20;
+                        params.bottomMargin = 20;
+                        input.setLayoutParams(params);
+                        container.addView(input);
+                        builder.setView(container);
+
+                        builder.setPositiveButton("Найти", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                String query = input.getText().toString().trim();
+                                dispatchJsSearch(query);
+                            }
+                        });
+                        builder.setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+
+                        final AlertDialog dialog = builder.create();
+                        if (dialog.getWindow() != null) {
+                            dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+                        }
+                        dialog.show();
+                        input.requestFocus();
+
+                        input.setOnEditorActionListener((v, actionId, event) -> {
+                            String query = input.getText().toString().trim();
+                            dispatchJsSearch(query);
+                            dialog.dismiss();
+                            return true;
+                        });
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
         }
 
         @JavascriptInterface
@@ -831,6 +900,17 @@ public class MainActivity extends Activity {
             "window.dispatchEvent(ev);" +
             "})();";
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            webView.evaluateJavascript(js, null);
+        } else {
+            webView.loadUrl("javascript:" + js);
+        }
+    }
+
+    private void dispatchJsSearch(String query) {
+        if (webView == null) return;
+        String safeQuery = query != null ? query.replace("'", "\\'") : "";
+        String js = "(function(){ if (window.freeTV && typeof window.freeTV.setSearchQuery === 'function') { window.freeTV.setSearchQuery('" + safeQuery + "'); } })();";
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             webView.evaluateJavascript(js, null);
         } else {
