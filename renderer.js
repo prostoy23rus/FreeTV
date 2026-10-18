@@ -170,8 +170,12 @@ class FreeTVApp {
 
   bindEvents() {
     // Сворачивание / разворачивание боковой панели
-    this.collapseSidebarBtn.addEventListener('click', () => this.toggleSidebar(false));
-    this.expandSidebarBtn.addEventListener('click', () => this.toggleSidebar(true));
+    if (this.collapseSidebarBtn) {
+      this.collapseSidebarBtn.addEventListener('click', () => this.toggleSidebar(false));
+    }
+    if (this.expandSidebarBtn) {
+      this.expandSidebarBtn.addEventListener('click', () => this.toggleSidebar(true));
+    }
 
     // Слушатель готовности фонового EPG
     if (window.api && window.api.onEpgReady) {
@@ -425,10 +429,10 @@ class FreeTVApp {
   toggleSidebar(open) {
     if (open) {
       this.sidebar.classList.remove('collapsed');
-      this.expandSidebarBtn.style.display = 'none';
+      if (this.expandSidebarBtn) this.expandSidebarBtn.style.display = 'none';
     } else {
       this.sidebar.classList.add('collapsed');
-      this.expandSidebarBtn.style.display = 'inline-flex';
+      if (this.expandSidebarBtn) this.expandSidebarBtn.style.display = 'inline-flex';
     }
   }
 
@@ -715,8 +719,10 @@ class FreeTVApp {
     this.channelNumBadge.textContent = `№ ${channel.id}`;
     this.streamStatus.textContent = 'Подключение...';
     this.streamStatus.className = 'status-indicator';
-    this.toggleFavBtn.disabled = false;
-    this.updateFavButtonState();
+    if (this.toggleFavBtn) {
+      this.toggleFavBtn.disabled = false;
+      this.updateFavButtonState();
+    }
 
     this.updateHeaderLogo(channel);
 
@@ -995,7 +1001,7 @@ class FreeTVApp {
   }
 
   updateFavButtonState() {
-    if (!this.currentChannel) return;
+    if (!this.currentChannel || !this.toggleFavBtn) return;
     const isFav = this.favorites.has(this.currentChannel.url);
     this.toggleFavBtn.classList.toggle('is-fav', isFav);
     this.toggleFavBtn.title = isFav ? 'Удалить из избранного' : 'Добавить в избранное';
