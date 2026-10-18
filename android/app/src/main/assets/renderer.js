@@ -227,9 +227,7 @@ class FreeTVApp {
     });
 
     this.clearSearchBtn.addEventListener('click', () => {
-      this.searchInput.value = '';
-      this.clearSearchBtn.style.display = 'none';
-      this.applyFilters();
+      this.clearSearch();
     });
 
     // Вкладки (Все, Избранное, История)
@@ -238,6 +236,7 @@ class FreeTVApp {
         this.filterTabs.forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         this.activeTab = tab.dataset.tab;
+        this.clearSearch();
         this.applyFilters();
       });
     });
@@ -440,11 +439,35 @@ class FreeTVApp {
     this.dialTimer = null;
 
     window.addEventListener('keydown', (e) => {
-      // Игнорируем ввод текста в полях ввода, кроме Escape
-      if (document.activeElement === this.searchInput || document.activeElement === this.playlistUrlInput) {
-        if (e.key === 'Escape') {
+      // Обработка клавиш в поле ввода поиска
+      if (document.activeElement === this.searchInput) {
+        if (e.key === 'Escape' || e.key === 'Back' || e.key === 'GoBack') {
+          e.preventDefault();
+          this.clearSearch();
           document.activeElement.blur();
           this.focusCurrentOrFirstChannel();
+          return;
+        }
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          document.activeElement.blur();
+          this.focusCurrentOrFirstChannel();
+          return;
+        }
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          document.activeElement.blur();
+          const tab = this.sidebar.querySelector('.filter-tab.active') || this.sidebar.querySelector('.filter-tab');
+          if (tab) tab.focus();
+          else this.focusCurrentOrFirstChannel();
+          return;
+        }
+        return;
+      }
+
+      if (document.activeElement === this.playlistUrlInput) {
+        if (e.key === 'Escape' || e.key === 'Back') {
+          document.activeElement.blur();
         }
         return;
       }
@@ -709,6 +732,7 @@ class FreeTVApp {
     `;
     allItem.addEventListener('click', () => {
       this.selectedCategory = 'ALL';
+      this.clearSearch();
       this.updateCategoryLabel();
       this.applyFilters();
       this.closeCategoryModal();
@@ -727,6 +751,7 @@ class FreeTVApp {
       `;
       item.addEventListener('click', () => {
         this.selectedCategory = cat.name;
+        this.clearSearch();
         this.updateCategoryLabel();
         this.applyFilters();
         this.closeCategoryModal();
@@ -734,6 +759,17 @@ class FreeTVApp {
       });
       this.categoryModalList.appendChild(item);
     });
+  }
+
+  clearSearch(apply = true) {
+    if (!this.searchInput) return;
+    if (this.searchInput.value) {
+      this.searchInput.value = '';
+      if (this.clearSearchBtn) this.clearSearchBtn.style.display = 'none';
+      if (apply) {
+        this.applyFilters();
+      }
+    }
   }
 
   applyFilters() {
@@ -861,6 +897,11 @@ class FreeTVApp {
     localStorage.setItem('freetv_last_channel', channel.url);
 
     this.addToHistory(channel);
+
+    // Сбрасываем поисковый запрос при выборе канала, чтобы не блокировать каталог
+    if (this.searchInput && this.searchInput.value) {
+      this.clearSearch();
+    }
 
     // Обновляем шапку
     this.currentName.textContent = channel.name;
@@ -1166,8 +1207,11 @@ class FreeTVApp {
         this.fullscreenBtn.querySelector('.btn-text').textContent = 'Свернуть';
         this.fullscreenBtn.querySelector('.btn-icon').textContent = '🗗';
       }
-      // При входе в полный экран прячем OSD, чтобы экран был абсолютно чистым
+      // При входе в полный экран прячем OSD и сбрасываем поиск
       if (this.quickOsd) this.quickOsd.style.display = 'none';
+      if (this.searchInput && this.searchInput.value) {
+        this.clearSearch();
+      }
       if (this.videoContainer) this.videoContainer.focus();
     } else {
       document.body.classList.remove('tv-fullscreen');
@@ -1509,6 +1553,12 @@ class FreeTVApp {
       }
       if (this.settingsModal && this.settingsModal.style.display !== 'none') {
         this.settingsModal.style.display = 'none';
+        return true;
+      }
+      // Если был выполнен поиск — сбрасываем его и возвращаем полный список каналов
+      if (this.searchInput && this.searchInput.value) {
+        this.clearSearch();
+        this.focusCurrentOrFirstChannel();
         return true;
       }
       this.focusCurrentOrFirstChannel();
