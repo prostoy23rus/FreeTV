@@ -273,14 +273,17 @@ class FreeTVApp {
 
     // Fullscreen
     if (this.fullscreenBtn) {
-      this.fullscreenBtn.addEventListener('click', () => {
-        if (!document.fullscreenElement) {
-          this.videoContainer.requestFullscreen().catch(err => console.error(err));
-        } else {
-          document.exitFullscreen();
-        }
+      this.fullscreenBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.toggleTvFullscreen();
       });
     }
+
+    this.videoContainer.addEventListener('click', () => {
+      if (document.body.classList.contains('tv-fullscreen')) {
+        this.toggleTvFullscreen(false);
+      }
+    });
 
     // Плавное скрытие и показ плавающих оверлеев при тапе/движении мыши
     let controlsTimer = null;
@@ -423,11 +426,7 @@ class FreeTVApp {
           document.activeElement.click();
         }
       } else if (e.key === 'f' || e.key === 'F') {
-        if (!document.fullscreenElement) {
-          this.videoContainer.requestFullscreen().catch(err => console.error(err));
-        } else {
-          document.exitFullscreen();
-        }
+        this.toggleTvFullscreen();
       } else if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'MediaPlayPause') {
         e.preventDefault();
         if (this.video.paused) this.video.play();
@@ -437,10 +436,10 @@ class FreeTVApp {
       } else if (e.key === 'MediaPause' || e.key === 'MediaStop') {
         this.video.pause();
       } else if (e.key === 'Escape' || e.key === 'Back' || e.key === 'GoBack' || e.keyCode === 4 || e.keyCode === 27) {
-        if (this.settingsModal.style.display !== 'none') {
+        if (this.settingsModal && this.settingsModal.style.display !== 'none') {
           this.settingsModal.style.display = 'none';
-        } else if (!this.sidebar.classList.contains('collapsed')) {
-          this.toggleSidebar(false);
+        } else if (document.body.classList.contains('tv-fullscreen')) {
+          this.toggleTvFullscreen(false);
         } else if (document.fullscreenElement) {
           document.exitFullscreen();
         }
@@ -798,11 +797,6 @@ class FreeTVApp {
 
     // Запуск потока
     this.loadStream(channel.url);
-
-    // В ландшафтном режиме / на ТВ плавно скрываем боковую панель через 500мс для полноэкранного просмотра
-    if (window.innerWidth > window.innerHeight) {
-      setTimeout(() => this.toggleSidebar(false), 500);
-    }
   }
 
   async fetchAndDisplayEpg(channel) {
@@ -1067,6 +1061,42 @@ class FreeTVApp {
 
   hideError() {
     this.errorBanner.style.display = 'none';
+  }
+
+  toggleTvFullscreen(force) {
+    const isCurrentlyFullscreen = document.body.classList.contains('tv-fullscreen') || !!document.fullscreenElement;
+    const shouldBeFullscreen = (force !== undefined) ? force : !isCurrentlyFullscreen;
+
+    if (window.AndroidBridge && typeof window.AndroidBridge.setFullscreenState === 'function') {
+      window.AndroidBridge.setFullscreenState(shouldBeFullscreen);
+    }
+
+    if (shouldBeFullscreen) {
+      document.body.classList.add('tv-fullscreen');
+      if (this.fullscreenBtn) {
+        this.fullscreenBtn.querySelector('.btn-text').textContent = 'Свернуть';
+        this.fullscreenBtn.querySelector('.btn-icon').textContent = '🗗';
+      }
+      if (this.currentChannel) {
+        this.showQuickOsd(`${this.currentChannel.id}. ${this.currentChannel.name}`);
+      }
+      try {
+        if (this.videoContainer.requestFullscreen && !document.fullscreenElement) {
+          this.videoContainer.requestFullscreen().catch(() => {});
+        }
+      } catch (e) {}
+    } else {
+      document.body.classList.remove('tv-fullscreen');
+      if (this.fullscreenBtn) {
+        this.fullscreenBtn.querySelector('.btn-text').textContent = 'Во весь экран';
+        this.fullscreenBtn.querySelector('.btn-icon').textContent = '⛶';
+      }
+      try {
+        if (document.fullscreenElement && document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        }
+      } catch (e) {}
+    }
   }
 
   navigateChannels(delta) {

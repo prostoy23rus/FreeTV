@@ -505,6 +505,43 @@ body {
   font-weight: 700;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fullscreen-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #172339;
+  border: 1px solid #283958;
+  color: #f1f5f9;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  touch-action: manipulation;
+}
+
+.fullscreen-btn:hover,
+.fullscreen-btn:focus,
+.fullscreen-btn:focus-visible {
+  background: #0284c7 !important;
+  border-color: #38bdf8 !important;
+  color: #ffffff !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px #38bdf8, 0 0 16px rgba(56, 189, 248, 0.5) !important;
+  transform: scale(1.05);
+}
+
+.fullscreen-btn .btn-icon {
+  font-size: 16px;
+}
+
 .header-controls {
   display: flex;
   align-items: center;
@@ -1027,31 +1064,51 @@ body.is-tv .app-container {
   height: 100vh !important;
   position: relative !important;
   background: #070d18 !important;
+  overflow: hidden !important;
 }
 
-body.is-tv .sidebar {
+body.is-tv:not(.tv-fullscreen) .sidebar {
   display: flex !important;
+  flex-direction: column !important;
   width: 440px !important;
   min-width: 400px !important;
+  max-width: 460px !important;
+  flex: 0 0 440px !important;
   height: 100vh !important;
   position: relative !important;
   z-index: 100 !important;
+  background-color: #0d1526 !important;
+  border-right: 1px solid #1a2742 !important;
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5) !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }
 
-body.is-tv .player-area {
+body.is-tv .sidebar.collapsed {
+  display: none !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  flex: 0 0 0 !important;
+}
+
+body.is-tv:not(.tv-fullscreen) .player-area {
   display: flex !important;
   flex-direction: column !important;
-  flex: 1 !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
   height: 100vh !important;
   position: relative !important;
   z-index: 10 !important;
   background: #000 !important;
 }
 
-body.is-tv .video-container {
-  flex: 1 !important;
+body.is-tv:not(.tv-fullscreen) .video-container {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
   display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   position: relative !important;
   background: #000 !important;
   width: 100% !important;
@@ -1059,12 +1116,24 @@ body.is-tv .video-container {
   max-height: none !important;
 }
 
-body.is-tv .player-header {
+body.is-tv:not(.tv-fullscreen) .player-header {
   display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 10px 24px !important;
+  background: #0d1526 !important;
+  border-bottom: 1px solid #1a2742 !important;
+  min-height: 64px !important;
 }
 
-body.is-tv .epg-bar {
+body.is-tv:not(.tv-fullscreen) .epg-bar {
   display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 10px 24px !important;
+  background: #0a1120 !important;
+  border-top: 1px solid #1a2742 !important;
+  min-height: 60px !important;
 }
 
 body.is-tv .channel-item {
@@ -1088,6 +1157,84 @@ body.is-tv .epg-title {
 
 body.is-tv .epg-desc {
   font-size: 14px !important;
+}
+
+body.is-tv .fullscreen-btn {
+  padding: 10px 20px !important;
+  font-size: 15px !important;
+  border-radius: 9px !important;
+  background: #172339 !important;
+  border: 1.5px solid #38bdf8 !important;
+  color: #f8fafc !important;
+}
+
+body.is-tv .fullscreen-btn:focus,
+body.is-tv .fullscreen-btn:hover {
+  background: #0284c7 !important;
+  border-color: #ffffff !important;
+  color: #ffffff !important;
+  outline: none !important;
+  transform: scale(1.06) !important;
+  box-shadow: 0 0 0 3px #ffffff, 0 0 20px rgba(56, 189, 248, 0.8) !important;
+}
+
+/* ================== РЕЖИМ ВО ВЕСЬ ЭКРАН НА ТВ (ТОЛЬКО ПО КНОПКЕ) ================== */
+body.tv-fullscreen .sidebar,
+body.tv-fullscreen .player-header,
+body.tv-fullscreen .epg-bar,
+body.tv-fullscreen .expand-sidebar-btn {
+  display: none !important;
+}
+
+body.tv-fullscreen .app-container {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #000 !important;
+  overflow: hidden !important;
+}
+
+body.tv-fullscreen .player-area {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 99999 !important;
+  background: #000 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+body.tv-fullscreen .video-container {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  background: #000 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+body.tv-fullscreen #videoPlayer {
+  width: 100vw !important;
+  height: 100vh !important;
+  object-fit: contain !important;
+  background: #000 !important;
 }
 
 /* Крупный индикатор номера канала при наборе с пульта ДУ */
@@ -1200,8 +1347,15 @@ body.is-tv .epg-desc {
   }
 }
 
+body.is-mobile .header-right {
+  display: none !important;
+}
+
 /* ВЕРТИКАЛЬНЫЙ РЕЖИМ (PORTRAIT) НА СМАРТФОНАХ */
 @media (orientation: portrait) {
+  .header-right {
+    display: none !important;
+  }
   .app-container {
     flex-direction: column;
     height: 100vh;

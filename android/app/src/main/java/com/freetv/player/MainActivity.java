@@ -53,6 +53,7 @@ public class MainActivity extends Activity {
     private FrameLayout customViewContainer;
     private WebChromeClient.CustomViewCallback customViewCallback;
     private View customView;
+    private WebAppInterface webAppInterface;
 
     private long backPressedTime = 0;
     private Toast backToast;
@@ -80,6 +81,17 @@ public class MainActivity extends Activity {
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
 
     public class WebAppInterface {
+        private volatile boolean isFullscreen = false;
+
+        @JavascriptInterface
+        public void setFullscreenState(boolean fullscreen) {
+            this.isFullscreen = fullscreen;
+        }
+
+        public boolean isFullscreen() {
+            return isFullscreen;
+        }
+
         @JavascriptInterface
         public String getBundledPlaylist() {
             try {
@@ -327,7 +339,8 @@ public class MainActivity extends Activity {
         setupWebViewClients();
 
         // Добавляем нативный мост для мгновенного доступа к плейлисту и сети
-        webView.addJavascriptInterface(new WebAppInterface(), "AndroidBridge");
+        webAppInterface = new WebAppInterface();
+        webView.addJavascriptInterface(webAppInterface, "AndroidBridge");
 
         webView.loadUrl("file:///android_asset/index.html");
 
@@ -711,12 +724,16 @@ public class MainActivity extends Activity {
                 return true;
             }
 
-            // Кнопка Назад (двойное нажатие для чистого выхода из приложения)
+            // Кнопка Назад (выход из полноэкранного режима или двойное нажатие для выхода)
             if (keyCode == KeyEvent.KEYCODE_BACK) {
                 if (customView != null) {
                     if (webView != null && webView.getWebChromeClient() != null) {
                         webView.getWebChromeClient().onHideCustomView();
                     }
+                    return true;
+                }
+                if (webAppInterface != null && webAppInterface.isFullscreen()) {
+                    dispatchJsEvent("Escape");
                     return true;
                 }
                 long now = System.currentTimeMillis();
@@ -754,6 +771,10 @@ public class MainActivity extends Activity {
             if (webView != null && webView.getWebChromeClient() != null) {
                 webView.getWebChromeClient().onHideCustomView();
             }
+            return;
+        }
+        if (webAppInterface != null && webAppInterface.isFullscreen()) {
+            dispatchJsEvent("Escape");
             return;
         }
         long now = System.currentTimeMillis();
